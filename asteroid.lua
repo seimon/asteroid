@@ -1,5 +1,5 @@
 dev=1
-ver="0.11" -- 2022/02/05
+ver="0.12" -- 2022/06/26
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
@@ -164,8 +164,11 @@ shape_ast3=split(shape_ast_str3,",")
 arr_scale(shape_ast1,2.3)
 arr_scale(shape_ast2,1.6)
 arr_scale(shape_ast3,0.85)
-shape_title_str="-1,6,2,0,5,6,9,6,9,4,5,2,5,0,13,0,18,0,14,0,14,6,18,6,19,6,19,0,23,0,23,2,19,2,x,x,24,0,24,6,28,6,28,0,24,0,x,x,30,0,30,6,x,x,32,0,32,6,34,6,36,3,34,0,32,0,x,x,37,6,41,6,41,4,37,2,37,0,41,0"
-shape_title_str=shape_title_str..",x,x,0,4,4,4,x,x,11,0,11,6,x,x,14,3,17,3,x,x,21,2,23,6"
+shape_title_str="0,6,3,0,6,6,10,6,10,4,6,2,6,0,14,0,x,x,12,0,12,6,x,x,1,4,5,4" -- AST
+shape_title_str=shape_title_str..",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3" -- E
+shape_title_str=shape_title_str..",x,x,20,6,20,0,24,0,24,3,21,3,24,6,x,x,25,6,28,6,29,4,29,0,26,0,25,2,25,6" -- RO
+shape_title_str=shape_title_str..",x,x,30,0,32,0,x,x,31,0,31,6,x,x,30,6,32,6" -- I
+shape_title_str=shape_title_str..",x,x,33,6,36,6,37,4,37,2,36,0,33,0,33,6,x,x,38,6,42,6,42,4,38,2,38,0,42,0" -- DS
 shape_title=split(shape_title_str,",")
 arr_scale(shape_title,2.5)
 
@@ -694,7 +697,7 @@ end
 
 function draw_title(c)
 	-- draw_shape(shape_title,14,35,0,0)
-	draw_shape(shape_title,13,36,c,0)
+	draw_shape(shape_title,13-3,36,c,0)
 	-- ?"d e m a k e  2 0 2 2",25,55,0
 	?"d e m a k e  2 0 2 2",24,56,c
 end

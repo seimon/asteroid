@@ -1,5 +1,5 @@
-dev=1
-ver="0.14" -- 2022/06/29
+dev=0
+ver="0.16" -- 2022/07/01
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
@@ -160,7 +160,7 @@ shape_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
 shape_ast1=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",2.3)
 shape_ast2=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.5)
 shape_ast3=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",0.85)
-s_title_str="0,6,3,0,6,6,10,6,10,4,6,2,6,0,14,0,x,x,12,0,12,6,x,x,1,4,5,4" -- AST
+s_title_str="0,6,3,0,6,6,10,6,10,4,6,2,6,0,10,0,14,0,x,x,12,0,12,6,x,x,1,4,5,4" -- AST
 s_title_str=s_title_str..",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3" -- E
 s_title_str=s_title_str..",x,x,20,6,20,0,24,0,24,3,21,3,24,6,x,x,25,6,28,6,29,4,29,0,26,0,25,2,25,6" -- RO
 s_title_str=s_title_str..",x,x,30,0,32,0,x,x,31,0,31,6,x,x,30,6,32,6" -- I
@@ -168,6 +168,17 @@ s_title_str=s_title_str..",x,x,33,6,36,6,37,4,37,2,36,0,33,0,33,6,x,x,38,6,42,6,
 s_title=str_to_arr(s_title_str,2.5)
 s_demake=str_to_arr("0,0,0,6,3,6,4,4,4,2,3,0,0,0,x,x,9,0,5,0,5,6,10,6,10,0,13,6,16,0,16,6,19,0,22,6,22,0,x,x,31,0,27,0,27,6,31,6,x,x,5,3,8,3,x,x,17,4,21,4,x,x,26,0,22,3,26,6,x,x,27,3,30,3",2.5)
 s_2022=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,15,4,15,6,19,6",2.5)
+s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",2.5)
+s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",2.5)
+
+s_circle={}
+for i=0,24 do
+	local r=i/24
+	local x,y=cos(r)*40,sin(r)*40
+	add(s_circle,x)
+	add(s_circle,y)
+end
+
 
 
 
@@ -180,24 +191,17 @@ function space:init(is_front)
 	self.particles={}
 
 	local function make_star(i,max,base_spd)
-		-- local col={1,1,1,1,5,13}
 		return {
 			x=rnd(127),
 			y=rnd(127),
-			-- c=base_spd>1 and col[5+round(i/max)] or col[1+round(i/max*5)],
-			-- c=base_spd>1 and 13 or 1,
 			spd=base_spd+i/max*base_spd,
 			size=1+rnd(1)
 		}
 	end
 	if is_front then
-		for i=1,8 do
-			add(self.stars,make_star(i,8,2))
-		end
+		for i=1,12 do add(self.stars,make_star(i,12,3)) end
 	else
-		for i=1,50 do
-			add(self.stars,make_star(i,50,1))
-		end
+		for i=1,50 do add(self.stars,make_star(i,50,1)) end
 	end
 
 	self:show(true)
@@ -265,35 +269,42 @@ function space:_draw()
 			v.sy*=0.93
 			if(v.age>16) del(self.particles,v) ]]
 
-	elseif v.type=="bullet" then
+	elseif v.type=="bullet" or v.type=="bullet_ufo" then
 			v.x+=v.sx
 			v.y+=v.sy
 			coord_loop(v)
 			pset(v.x,v.y,11)
 			if(v.age>v.age_max) del(self.particles,v)
 
-			-- hit test bullet & enemy
-			local destroys={}
-			-- for j,e in pairs(_enemies.list) do
-			for e in all(_enemies.list) do
-				local dist=(e.size==4) and 7 or (e.size==1) and 9 or (e.size==2) and 7 or 5
-				if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
-
-					score_up(e.size)
-					if(e.size<3) add(destroys,{x=e.x,y=e.y,size=e.size})
-
-					local shape=(e.size==1) and shape_ast1 or (e.size==2) and shape_ast2 or shape_ast3
-					-- add_break_eff(e.x,e.y,shape)
-					add_explosion_eff(e.x,e.y,v.sx,v.sy)
-					del(self.particles,v)
-					del(_enemies.list,e)
-					sfx(3,3)
+			if v.type=="bullet" then
+				-- hit test bullet & enemy
+				local killed={}
+				for e in all(_enemies.list) do
+					local dist=(e.size==4) and 7 or (e.size==1) and 9 or (e.size==2) and 7 or 5
+					if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
+						score_up(e.size)
+						if(e.size<3) add(killed,{x=e.x,y=e.y,size=e.size})
+						local shape=(e.size==1) and shape_ast1 or (e.size==2) and shape_ast2 or shape_ast3
+						add_break_eff(e.x,e.y,shape)
+						add_explosion_eff(e.x,e.y,v.sx,v.sy)
+						del(self.particles,v)
+						del(_enemies.list,e)
+						sfx(3,3)
+					end
 				end
-			end
-
-			for e in all(destroys) do
-				_enemies:add(e.x+1,e.y+1,e.size+1)
-				_enemies:add(e.x-1,e.y-1,e.size+1)
+				for e in all(killed) do
+					_enemies:add(e.x+1,e.y+1,e.size+1)
+					_enemies:add(e.x-1,e.y-1,e.size+1)
+				end
+			else
+				-- ship과 충돌 처리
+				local dist=4+(_ship.use_shield and 5 or 0)
+				local x,y=_ship.x,_ship.y
+				if abs(v.x-x)<=dist and abs(v.y-y)<=dist and get_dist(v.x,v.y,x,y)<=dist then
+					if _ship.use_shield then add_explosion_eff(v.x,v.y,v.sx,v.sy)
+					else _ship:kill() end
+					del(self.particles,v)
+				end
 			end
 
 		elseif v.type=="explosion" then
@@ -335,7 +346,7 @@ function space:_draw()
 			if(v.age>v.age_max) del(self.particles,v)
 
 		elseif v.type=="circle" then
-			local r=v.r_min+v.r*(1-v.age/v.age_max)
+			local r=v.r1+(v.r2-v.r1)*(v.age/v.age_max)
 			circ(v.x,v.y,r,11)
 			if(v.age>v.age_max) del(self.particles,v)
 
@@ -375,7 +386,7 @@ function ship:init()
 	self.head={x=0,y=0}
 	self.fire_spd=1.6
 	self.fire_intv=0
-	self.fire_intv_full=14
+	self.fire_intv_full=14-(dev==1 and 12 or 0)
 	-- self.bomb_spd=0.7
 	-- self.bomb_intv=0
 	-- self.bomb_intv_full=60
@@ -446,6 +457,9 @@ function ship:on_update()
 	-- fire
 	self.fire_intv-=1
 	if btn(4) and self.fire_intv<=0 then
+
+		if(dev) score_up(4)
+
 		sfx(23,-1)
 		self.fire_intv=self.fire_intv_full
 		local fire_spd_x=cos(self.angle)*self.fire_spd+self.spd_x*1.4
@@ -476,28 +490,6 @@ function ship:on_update()
 			self.shield_timer=120
 		end
 	end
-
-	--[[ 
-	-- bomb
-	-- todo: 폭탄 인터벌이든 뭐든 처리해야 함
-	self.bomb_intv-=1
-	if btn(5) and self.bomb_intv<=0 then
-		sfx(6,-1)
-		self.bomb_intv=self.bomb_intv_full
-		local fire_spd_x=cos(self.angle)*self.bomb_spd+self.spd_x
-		local fire_spd_y=sin(self.angle)*self.bomb_spd+self.spd_y
-		add(_space.particles,
-		{
-			type="bomb",
-			x=self.head.x,
-			y=self.head.y,
-			sx=fire_spd_x,
-			sy=fire_spd_y,
-			spr=16+round(self.angle*8-0.0625)%8,
-			age_max=120,
-			age=1
-		})
-	end ]]
 
 	-- add effect
 	if self.thrust_acc>0 then
@@ -539,7 +531,8 @@ function ship:on_update()
 	-- for i,e in pairs(_enemies.list) do
 	local x,y=self.x,self.y
 	for e in all(_enemies.list) do
-		local dist=(e.size==1) and 9+5 or (e.size==2) and 7+5 or 5+5
+		local dist=(e.size==1) and 7+4 or (e.size==2) and 5+4 or 3+4
+		if(self.use_shield) dist+=3
 		if abs(e.x-x)<=dist and abs(e.y-y)<=dist and get_dist(e.x,e.y,x,y)<=dist then	
 			
 			-- 단순 속도 교환 방식
@@ -559,7 +552,6 @@ function ship:on_update()
 				-- 충돌 방향만 보고 서로 반대로 밀기
 				local d=atan2(e.x-x,e.y-y)
 				local sx,sy=cos(d)*0.5,sin(d)*0.5
-				-- add_debugline_eff(e.x,e.y,x,y)
 				e.spd_x=sx
 				e.spd_y=sy
 				e.x+=sx*2
@@ -571,53 +563,47 @@ function ship:on_update()
 				sfx(2,3)
 				add_hit_eff((x+e.x)/2,(y+e.y)/2,d)
 			elseif not self.is_killed then
-				sfx(3,3)
-				sfx(-1,2) -- 분사음 강제로 끔
-				add_explosion_eff(x,y,self.spd_x,self.spd_y,2,40)
 				self:kill()
 			end
 
 		end
 	end
-	
---[[ 
-	-- space speed update
-	_space.spd_x=self.spd_x
-	_space.spd_y=-self.spd_y
-	
-	-- space center move(use space speed & ship direction)
-	local tcx=64-self.spd_x*12-cos(self.angle)*22
-	local tcy=64-self.spd_y*12-sin(self.angle)*22
-	cx=cx+(tcx-cx)*0.03
-	cy=cy+(tcy-cy)*0.03
-	 ]]
 end
 
 function ship:kill()
-	self.is_killed=true
-	-- self.thrust_acc=0
-	self:show(false)
+	if(self.is_killed) return
 
-	self.revive_count=120
+	sfx(3,3)
+	sfx(-1,2) -- 분사음 강제로 끔
+	local x,y=self.x,self.y
+	add_explosion_eff(x,y,self.spd_x,self.spd_y,2,40)
+	add_break_eff(x,y,shape_ship,1,60)
+	add_break_eff(x,y,shape_ship,2,60)
+
+	self.is_killed=true
+	self:show(false)
+	self.revive_count=150
 	self:on("update",self.on_killed)
-	add_circle_eff(64,64,120,7,120)
 end
 
 function ship:on_killed()
 	self.revive_count-=1
+	if(self.revive_count==60 and gg.ships>=1) add_circle_eff(64,64,4,40,60)
 	if self.revive_count<=0 then
-		gdata.ships-=1
-		self:revive()
+		gg.ships-=1
+		if gg.ships>=0 then
+			add_break_eff(64,64,s_circle,0.8,20)
+			self:revive()
+		else
+			_enemies:kill_all()
+			gg.is_gameover=true
+			gg.key_wait=30
+		end
 		self:remove_handler("update",self.on_killed)
 	end
 end
 
-function ship:revive()
-
-	-- todo:소행성들을 다 부순다
-	_enemies:kill_all()
-
-	self.is_killed=false
+function ship:reset()
 	self.x,self.y=64,64
 	self.spd=0
 	self.spd_x,self.spd_y=0,0
@@ -625,13 +611,16 @@ function ship:revive()
 	self.angle_acc=0
 	self.thrust=0
 	self.thrust_acc=0
-	self:show(true)
-
-	add_explosion_eff(64,64,0,0,2,40)
-	-- add_break_eff(64,64,shape_ship,3,60)
+	self.is_killed=false
+	-- todo: 쉴드도 리셋해야 함
 end
 
-
+function ship:revive()
+	_enemies:kill_center(40)
+	self:reset()
+	self:show(true)
+	add_explosion_eff(64,64,0,0,2,40)
+end
 
 
 
@@ -643,6 +632,8 @@ end
 
 function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 
+	if gg.is_gameover then return end
+
 	local c1,c2,c3,c4=0,0,0,0
 	for e in all(self.list) do
 		if(e.size==1) c1+=1
@@ -651,9 +642,8 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 		if(e.size==4) c4+=1
 	end
 
-	-- log(#self.list,c1,c2,c3)
-
-	if c1<3 and #self.list<10 then
+	local df=2+gg.score2 -- 난이도(큰 소행성이 리필되는 수 / 2~무제한???)
+	if c1<df and #self.list<10 then
 		local r=rnd()
 		local x=cos(r)*90
 		local y=sin(r)*90
@@ -661,9 +651,9 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 	end
 
 	-- 10000점마다 UFO 출현
-	if c4<1 and gdata.score\1>gdata.ufo_born then
+	if c4<1 and gg.score1\1000+gg.score2*10>gg.ufo_born then
 		self:add(-10,30+rndi(40),4,0.2,0,true)
-		gdata.ufo_born+=1
+		gg.ufo_born+=1
 	end
 
 end
@@ -696,12 +686,12 @@ function enemies:_draw()
 				local sy=sin(angle)*0.5
 				add(_space.particles,
 				{
-					type="bullet",
+					type="bullet_ufo",
 					x=e.x+sx*14,
 					y=e.y+sy*14,
 					sx=sx,
 					sy=sy,
-					age_max=80,
+					age_max=100,
 					age=1
 				})
 			end
@@ -748,11 +738,23 @@ end
 
 function enemies:kill_all()
 	for e in all(self.list) do
-		add_explosion_eff(e.x,e.y,e.spd_x,e.spd_y)
+		add_break_eff(e.x,e.y,shape_ast2,3,60)
 	end
 	sfx(3,3)
 	self.list={}
 end
+
+function enemies:kill_center(r)
+	local cx,cy=64,64
+	for e in all(self.list) do
+		if abs(cx-e.x)<=r and abs(cy-e.y)<=r and get_dist(cx,cy,e.x,e.y)<=r then
+			del(self.list,e)
+			add_break_eff(e.x,e.y,shape_ast2)
+			sfx(3,3)
+		end
+	end
+end
+
 
 
 -- <title> --------------------
@@ -765,37 +767,43 @@ function title:init()
 	self:show(true)
 end
 function title:_draw()
-	if gdata.is_title then
-		local x,y=self.tx,self.ty
+	local x,y=self.tx,self.ty
+	if gg.is_title then
 		draw_shape(s_title,x,y,self.c,0,true)
 		draw_shape(s_demake,x+15,y+20,self.c,0,true)
 		draw_shape(s_2022,x+30,y+40,self.c,0,true)
-		-- printa("d e m a k e  2 0 2 2",63,y+20,self.c,0.5,true)
-		-- if (f%60<40) printa("press 🅾️❎ to play",63,92-10,self.c,0.5)
-		local str="press 🅾️❎ to play"
-		local str2=""
-		for i=1,#str do
-			if i==flr(f%60/3) then
-				str2=str2.."\|f"..sub(str,i,_).."\|h"
-			elseif i==flr((f+6)%60/3) then
-					str2=str2.."\|h"..sub(str,i,_).."\|f"
-			else
-				str2=str2..sub(str,i,_)
-			end
-		end
-		?str2,28,92,self.c
+		?get_wave_str("press 🅾️❎ to play"),28,92,self.c
 
 		?"by 🐱seimon",1,120,self.c
 		printa("v"..ver,128,120,self.c,1)
 
-		if btn(4) or btn(5) then
+		if gg.key_wait>0 then
+			gg.key_wait-=1
+		elseif btn(4) or btn(5) then
 			sfx(6,3)
-			add_break_eff(self.tx,self.ty,s_title,3,60)
-			add_break_eff(self.tx+15,self.ty+20,s_demake,3,60)
-			add_break_eff(self.tx+30,self.ty+40,s_2022,3,60)
-			gdata.is_title=false
+			add_break_eff(x,y,s_title,3,60)
+			add_break_eff(x+15,y+20,s_demake,3,60)
+			add_break_eff(x+30,y+40,s_2022,3,60)
+			gg.is_title=false
+			_ship:reset()
 			_ship:show(true)
 			_enemies:show(true)
+		end
+	elseif gg.is_gameover then
+		draw_shape(s_game,8,y+12,self.c,0,true)
+		draw_shape(s_over,67,y+12,self.c,0,true)
+		printa("your score "..get_score_str(),63,70,self.c,0.5)
+		?get_wave_str("press 🅾️❎ to coutinue"),18,80,self.c
+		_ship:show(false)
+		_enemies:show(false)
+
+		if gg.key_wait>0 then
+			gg.key_wait-=1
+		elseif btn(4) or btn(5) then
+			sfx(3,3)
+			add_break_eff(8,y+12,s_game,3,60)
+			add_break_eff(67,y+12,s_over,3,60)
+			gg_reset()
 		end
 	end
 end
@@ -805,12 +813,40 @@ end
 
 -- <etc. functions> --------------------
 
-function score_up(size)
-	if size==4 then gdata.score+=0.10
-	elseif size==3 then gdata.score+=0.05
-	elseif size==2 then gdata.score+=0.03
-	elseif size==1 then gdata.score+=0.01
+function get_wave_str(str)
+	local str2=""
+	for i=1,#str do
+		if i==flr(f%60/3) then
+			str2=str2.."\|f"..sub(str,i,_).."\|h"
+		elseif i==flr((f+6)%60/3) then
+				str2=str2.."\|h"..sub(str,i,_).."\|f"
+		else
+			str2=str2..sub(str,i,_)
+		end
 	end
+	return str2
+end
+
+function score_up(size)
+
+	if size==4 then gg.score1+=20
+	elseif size==3 then gg.score1+=10
+	elseif size==2 then gg.score1+=5
+	elseif size==1 then gg.score1+=2
+	end
+
+	if gg.score1>=10000 then
+		gg.score2=min(gg.score2+1,10000)
+		gg.score1-=10000
+	end
+
+	-- 5만점마다 보너스
+	if gg.score1\5000+gg.score2*2>gg.bonus_earned then
+		gg.ships=min(gg.ships+1,8)
+		gg.bonus_earned+=1
+		-- todo: 보너스 효과
+	end
+
 end
 
 function value_loop(v,min,max)
@@ -868,14 +904,14 @@ function add_debugline_eff(x1,y1,x2,y2)
 			x1=x1,y1=y1,x2=x2,y2=y2,age=0
 		})
 end
-function add_circle_eff(x,y,r,r_min,timer)
+function add_circle_eff(x,y,r_from,r_to,timer)
 	add(_space.particles,
 		{
 			type="circle",
 			x=x,
 			y=y,
-			r=r,
-			r_min=r_min,
+			r1=r_from,
+			r2=r_to,
 			age=0,
 			age_max=timer
 		})
@@ -925,7 +961,7 @@ function add_hit_eff(x,y,angle)
 	end
 end
 function add_break_eff(x0,y0,arr,pow,age)
-	local pow=pow or 1
+	local pow=pow or 1.5
 	local age=age or 10
 	local p1={x=arr[1],y=arr[2]}
 	for i=3,#arr-1,2 do
@@ -943,7 +979,7 @@ function add_break_eff(x0,y0,arr,pow,age)
 					x2=x2-x1-dx,y2=y2-y1-dy,
 					sx=(rnd()-0.5)*pow,sy=(rnd()-0.5)*pow,
 					c=11,
-					r=(0.1+rnd())*0.03*(rndi(1)-0.5),
+					r=(0.1+rnd())*0.02*(rndi(1)-0.5)*pow,
 					age=0,age_max=age+rndi(age)
 				}
 				add(_space.particles,v)
@@ -953,28 +989,27 @@ function add_break_eff(x0,y0,arr,pow,age)
 	end
 end
 
-function print_score(num,len,x,y)
-	-- score는 9999.99를 x100한 후 "00"을 붙여서 표현
-	-- number의 최대값이 32767.9999라서 더 큰 숫자를 표현하기 위한 것
-	-- 0.01+0.01=0.0199인 버그가 있어서 소숫점 2자리까지만 사용함
-	-- 최대 327679900점까지 표현 가능하고 9999999까지만 표시함
-
-	local t
-	if num>=10000 then t="99999999"
+function print_score(len,x,y)
+	local t0,t1="",get_score_str()
+	for i=1,len-#t1 do t0=t0.."_" end
+	printa(t0,x,y,11,0)
+	printa(t1,x+len*4,y,11,1)
+end
+function get_score_str()
+	-- 소숫점 덧셈 버그 때문에 정수 2개 사용(0.1+0.1=0.199같은 버그)
+	local t=""
+	local n1,n2=gg.score1,gg.score2
+	if n2>=1000 then t="99999999"
 	else
-		local t1,t2=round(num%1*100),flr(num)
-		t=t1<=0 and "0" or tostr(t1).."00"
-		if t2>0 then
-			while #t<4 do t="0"..t end
+		local t1,t2=tostr(n1),tostr(n2)
+		t=n1<=0 and "0" or t1.."0"
+		if n2>0 then
+			while #t<5 do t="0"..t end
 			t=t2..t
 		end
 	end
-
-	local t0="" for i=1,len-#t do t0=t0.."_" end
-	printa(t0,x,y,11,0)
-	printa(t,x+len*4,y,11,1)
+	return t
 end
-
 
 
 -- <constants> --------------------
@@ -983,27 +1018,35 @@ end
 
 --------------------------------------------------
 f=0 -- every frame +1
-dim_pal={} -- 이게 있으면 stage 렌더링 시작할 때 팔레트 교체
 stage=sprite.new() -- scene graph top level object
--- cx,cy=64,64 -- space center
 
-gdata={
-	is_title=true,
-	score=0,
-	ships=3,
-	ufo_born=0,
-}
+gg={}
+function gg_reset()
+	gg={
+		key_wait=30,
+		is_title=true,
+		is_gameover=false,
+		score1=0,
+		score2=0,
+		ships=3,
+		bonus_earned=0,
+		ufo_born=0,
+	}	
+end
 
 function _init()
+	gg_reset()
 	--music(13,2000,2)
 	_space=space.new()
 	_ship=ship.new()
 	_enemies=enemies.new()
 	_title=title.new()
+	_space_f=space.new(true)
 	stage:add_child(_space)
 	stage:add_child(_ship)
 	stage:add_child(_enemies)
 	stage:add_child(_title)
+	stage:add_child(_space_f)
 end
 function _update60()
 	f+=1
@@ -1011,18 +1054,14 @@ function _update60()
 end
 function _draw()
 	cls(0)
-	pal()
-
-	if(#dim_pal>0) pal(dim_pal,0)
 	stage:render(0,0)
 
 	-- ui
-	-- fillp(0b1010010110100101.1) rectfill(0,0,127,6,0) fillp()
-	-- todo: 배경 어둡게 처리하는 게 꽤 무거운 방식이라 개선 필요
-	if not gdata.is_title then
-		for i=0,127 do for j=0,6 do pset(i,j,pget(i,j)==0 and 0 or 1) end end
-		print_score(gdata.score,8,50,1)
-		for i=0,gdata.ships-1 do
+	if not (gg.is_title or gg.is_gameover) then
+		fillp(0b1010010110100101.1) rectfill(0,0,127,6,0) fillp()
+		-- for i=0,127 do for j=0,6 do pset(i,j,pget(i,j)==0 and 0 or 1) end end -- 좀 무거운 방식이라 개선 필요
+		print_score(8,50,1)
+		for i=0,gg.ships-1 do
 			spr(13,1+i*6,1)
 		end
 	end

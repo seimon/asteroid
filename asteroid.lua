@@ -1,5 +1,5 @@
 dev=0
-ver="0.16" -- 2022/07/01
+ver="0.18" -- 2022/07/01
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
@@ -155,11 +155,12 @@ function str_to_arr(str,scale)
 	end
 	return arr
 end
-shape_ufo=str_to_arr("6,2,0,5,-6,2,6,2,2,-1,-2,-1,-6,2,-2,-1,-2,-3,2,-3,2,-1")
-shape_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
-shape_ast1=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",2.3)
-shape_ast2=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.5)
-shape_ast3=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",0.85)
+s_ufo=str_to_arr("6,2,0,5,-6,2,6,2,2,-1,-2,-1,-6,2,-2,-1,-2,-3,2,-3,2,-1")
+s_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
+s_shield=str_to_arr("0,-3,-2,-2,-3,0,-2,2,0,3,2,2,3,0,2,-2,0,-3",3)
+s_ast1=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",2.3)
+s_ast2=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.5)
+s_ast3=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",0.85)
 s_title_str="0,6,3,0,6,6,10,6,10,4,6,2,6,0,10,0,14,0,x,x,12,0,12,6,x,x,1,4,5,4" -- AST
 s_title_str=s_title_str..",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3" -- E
 s_title_str=s_title_str..",x,x,20,6,20,0,24,0,24,3,21,3,24,6,x,x,25,6,28,6,29,4,29,0,26,0,25,2,25,6" -- RO
@@ -170,7 +171,6 @@ s_demake=str_to_arr("0,0,0,6,3,6,4,4,4,2,3,0,0,0,x,x,9,0,5,0,5,6,10,6,10,0,13,6,
 s_2022=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,15,4,15,6,19,6",2.5)
 s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",2.5)
 s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",2.5)
-
 s_circle={}
 for i=0,24 do
 	local r=i/24
@@ -284,7 +284,7 @@ function space:_draw()
 					if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
 						score_up(e.size)
 						if(e.size<3) add(killed,{x=e.x,y=e.y,size=e.size})
-						local shape=(e.size==1) and shape_ast1 or (e.size==2) and shape_ast2 or shape_ast3
+						local shape=(e.size==1) and s_ast1 or (e.size==2) and s_ast2 or s_ast3
 						add_break_eff(e.x,e.y,shape)
 						add_explosion_eff(e.x,e.y,v.sx,v.sy)
 						del(self.particles,v)
@@ -301,7 +301,7 @@ function space:_draw()
 				local dist=4+(_ship.use_shield and 5 or 0)
 				local x,y=_ship.x,_ship.y
 				if abs(v.x-x)<=dist and abs(v.y-y)<=dist and get_dist(v.x,v.y,x,y)<=dist then
-					if _ship.use_shield then add_explosion_eff(v.x,v.y,v.sx,v.sy)
+					if _ship.use_shield then add_explosion_eff(v.x,v.y,v.sx,v.sy) sfx(2,3)
 					else _ship:kill() end
 					del(self.particles,v)
 				end
@@ -386,22 +386,21 @@ function ship:init()
 	self.head={x=0,y=0}
 	self.fire_spd=1.6
 	self.fire_intv=0
-	self.fire_intv_full=14-(dev==1 and 12 or 0)
-	-- self.bomb_spd=0.7
-	-- self.bomb_intv=0
-	-- self.bomb_intv_full=60
+	self.fire_intv_full=14-(dev==1 and 10 or 0)
+	
 	self.use_shield=false
-	self.shield_timer=120
-	self.shield_refill_timer=300
+	self.shield_enable=true
+	self.shield_timer=150
+	self.shield_timer_max=150
+	
 	self.is_killed=false
-	-- self.hit_count=0
-	-- self:show(true)
+	
 	self:on("update",self.on_update)
 end
 
 function ship:_draw()
 	local x,y=self.x,self.y
-	draw_shape(shape_ship,x,y,11,self.angle)
+	self:draw_ship(x,y)
 	local x0=cos(self.angle)
 	local y0=sin(self.angle)
 	self.tail.x=x-x0*6
@@ -409,15 +408,20 @@ function ship:_draw()
 	self.head.x=x+x0*8
 	self.head.y=y+y0*8
 
-	if self.use_shield then
-		circ(x,y,8,11)
-	end
-
 	-- 변두리에 있을 때 맞은편에도 그림
-	if x<4 then draw_shape(shape_ship,x+130,y,11,self.angle) end
-	if y<4 then draw_shape(shape_ship,x,y+130,11,self.angle) end
-	if x>123 then draw_shape(shape_ship,x-130,y,11,self.angle) end
-	if y>123 then draw_shape(shape_ship,x,y-130,11,self.angle) end
+	if x<4 then self:draw_ship(x+130,y) end
+	if y<4 then self:draw_ship(x,y+130) end
+	if x>123 then self:draw_ship(x-130,y) end
+	if y>123 then self:draw_ship(x,y-130) end
+end
+
+function ship:draw_ship(x,y)
+	draw_shape(s_ship,x,y,11,self.angle)
+	-- if self.use_shield then circ(x,y,8,11) end
+	if self.use_shield then
+		local r=self.shield_timer/self.shield_timer_max
+		draw_shape(s_shield,x,y,11,-f%30/30,false,r)
+	end
 end
 
 function ship:on_update()
@@ -458,7 +462,7 @@ function ship:on_update()
 	self.fire_intv-=1
 	if btn(4) and self.fire_intv<=0 then
 
-		if(dev) score_up(4)
+		if(dev==1) score_up(4)
 
 		sfx(23,-1)
 		self.fire_intv=self.fire_intv_full
@@ -477,17 +481,17 @@ function ship:on_update()
 	end
 
 	-- shield
-	-- TODO: 동작 제대로 구현해야 함
-	if btn(5) and self.shield_timer>0 then
+	if btn(5) and self.shield_timer>0 and self.shield_enable then
 		self.use_shield=true
 		self.shield_timer-=1
+		if(self.shield_timer<=0) self.shield_enable=false
 	else
 		self.use_shield=false
-		if self.shield_refill_timer>0 then
-			self.shield_refill_timer-=1
+		if self.shield_enable then
+			if(self.shield_timer<self.shield_timer_max) self.shield_timer+=1
 		else
-			self.shield_refill_timer=300
-			self.shield_timer=120
+			self.shield_timer+=0.2
+			if(self.shield_timer>=self.shield_timer_max) self.shield_enable=true
 		end
 	end
 
@@ -551,7 +555,7 @@ function ship:on_update()
 			if self.use_shield then
 				-- 충돌 방향만 보고 서로 반대로 밀기
 				local d=atan2(e.x-x,e.y-y)
-				local sx,sy=cos(d)*0.5,sin(d)*0.5
+				local sx,sy=cos(d)*0.35,sin(d)*0.35
 				e.spd_x=sx
 				e.spd_y=sy
 				e.x+=sx*2
@@ -577,8 +581,8 @@ function ship:kill()
 	sfx(-1,2) -- 분사음 강제로 끔
 	local x,y=self.x,self.y
 	add_explosion_eff(x,y,self.spd_x,self.spd_y,2,40)
-	add_break_eff(x,y,shape_ship,1,60)
-	add_break_eff(x,y,shape_ship,2,60)
+	add_break_eff(x,y,s_ship,1,60)
+	add_break_eff(x,y,s_ship,2,60)
 
 	self.is_killed=true
 	self:show(false)
@@ -597,6 +601,7 @@ function ship:on_killed()
 		else
 			_enemies:kill_all()
 			gg.is_gameover=true
+			gg.scene_timer=0
 			gg.key_wait=30
 		end
 		self:remove_handler("update",self.on_killed)
@@ -612,7 +617,8 @@ function ship:reset()
 	self.thrust=0
 	self.thrust_acc=0
 	self.is_killed=false
-	-- todo: 쉴드도 리셋해야 함
+	self.shield_enable=true
+	self.shield_timer=self.shield_timer_max
 end
 
 function ship:revive()
@@ -647,7 +653,7 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 		local r=rnd()
 		local x=cos(r)*90
 		local y=sin(r)*90
-		self:add(64+x,64+y,1,-x*0.003,-y*0.003,true)
+		self:add(64+x,64+y,1,-x*0.002,-y*0.002,true)
 	end
 
 	-- 10000점마다 UFO 출현
@@ -700,7 +706,7 @@ function enemies:_draw()
 			if(e.x>130) del(self.list,e)
 
 		else
-			local shape=(e.size==1) and shape_ast1 or (e.size==2) and shape_ast2 or shape_ast3
+			local shape=(e.size==1) and s_ast1 or (e.size==2) and s_ast2 or s_ast3
 			draw_shape(shape,e.x,e.y,11,e.angle)
 
 			-- 변두리에 있을 때 맞은편에도 그림(생성 초기는 제외)
@@ -718,8 +724,8 @@ end
 function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(ufo)
 	local sx,sy,sr=spd_x,spd_y,0
 	if size!=4 then
-		if(sx==nil) sx=(0.2+rnd(0.4))*(rndi(1)-0.5)
-		if(sy==nil) sy=(0.2+rnd(0.4))*(rndi(1)-0.5)
+		if(sx==nil) sx=(0.1+rnd(0.3))*(rndi(1)-0.5)
+		if(sy==nil) sy=(0.1+rnd(0.3))*(rndi(1)-0.5)
 		sr=(0.5+rnd(1))*(rndi(1)-0.5)*0.01
 	end
 	local e={
@@ -738,7 +744,7 @@ end
 
 function enemies:kill_all()
 	for e in all(self.list) do
-		add_break_eff(e.x,e.y,shape_ast2,3,60)
+		add_break_eff(e.x,e.y,s_ast2,3,60)
 	end
 	sfx(3,3)
 	self.list={}
@@ -749,7 +755,7 @@ function enemies:kill_center(r)
 	for e in all(self.list) do
 		if abs(cx-e.x)<=r and abs(cy-e.y)<=r and get_dist(cx,cy,e.x,e.y)<=r then
 			del(self.list,e)
-			add_break_eff(e.x,e.y,shape_ast2)
+			add_break_eff(e.x,e.y,s_ast2)
 			sfx(3,3)
 		end
 	end
@@ -844,7 +850,7 @@ function score_up(size)
 	if gg.score1\5000+gg.score2*2>gg.bonus_earned then
 		gg.ships=min(gg.ships+1,8)
 		gg.bonus_earned+=1
-		-- todo: 보너스 효과
+		-- todo: 보너스 이펙트, 소리
 	end
 
 end
@@ -872,13 +878,16 @@ function rotate(x,y,r)
 	return p
 end
 
-function draw_shape(arr,x,y,c,r,with_wave)
-	local p1=rotate(arr[1],arr[2],r)
-	for i=3,#arr-1,2 do
+function draw_shape(arr,x,y,c,angle,with_wave,draw_ratio)
+	local p1=rotate(arr[1],arr[2],angle)
+	local i2=#arr-1
+	if draw_ratio then i2=3+flr(#arr-3)*clamp(draw_ratio,0,1) end
+	for i=3,i2,2 do
+	-- for i=3,#arr-1,2 do
 		if arr[i]=="x" then
 			p1={x="x",y="x"}
 		else
-			local p2=rotate(arr[i],arr[i+1],r)
+			local p2=rotate(arr[i],arr[i+1],angle)
 			if p1.x!="x" then
 				if with_wave then
 					local dy1=sin((p1.x+p1.y-f)%60/60)*2
@@ -992,8 +1001,8 @@ end
 function print_score(len,x,y)
 	local t0,t1="",get_score_str()
 	for i=1,len-#t1 do t0=t0.."_" end
-	printa(t0,x,y,11,0)
-	printa(t1,x+len*4,y,11,1)
+	printa(t0,x,y,11,0,true)
+	printa(t1,x+len*4,y,11,1,true)
 end
 function get_score_str()
 	-- 소숫점 덧셈 버그 때문에 정수 2개 사용(0.1+0.1=0.199같은 버그)
@@ -1036,17 +1045,15 @@ end
 
 function _init()
 	gg_reset()
-	--music(13,2000,2)
+	-- music(13,2000,2)
 	_space=space.new()
 	_ship=ship.new()
 	_enemies=enemies.new()
 	_title=title.new()
-	_space_f=space.new(true)
 	stage:add_child(_space)
 	stage:add_child(_ship)
 	stage:add_child(_enemies)
 	stage:add_child(_title)
-	stage:add_child(_space_f)
 end
 function _update60()
 	f+=1
@@ -1058,12 +1065,27 @@ function _draw()
 
 	-- ui
 	if not (gg.is_title or gg.is_gameover) then
-		fillp(0b1010010110100101.1) rectfill(0,0,127,6,0) fillp()
+		-- fillp(0b1010010110100101.1) rectfill(0,0,127,6,0) fillp() -- 망점 가리기
 		-- for i=0,127 do for j=0,6 do pset(i,j,pget(i,j)==0 and 0 or 1) end end -- 좀 무거운 방식이라 개선 필요
 		print_score(8,50,1)
-		for i=0,gg.ships-1 do
-			spr(13,1+i*6,1)
+		palt(3,true) palt(0,false)
+		for i=0,gg.ships-1 do spr(13,1+i*6,1) end
+		-- spr(_ship.shield_enable and 11 or 12,93,1)
+		spr(_ship.shield_enable and 11 or 12,122,1)
+		palt()
+		local w=_ship.shield_timer/_ship.shield_timer_max*26
+		if w>1 then
+			--[[ rectfill(100,3,100+w,5,0)
+			fillp(0b1010101010101010.1) rectfill(99,2,99+w,4,11) fillp() ]]
+			--[[ rectfill(121-w,3,121,5,0)
+			fillp(0b0101010101010101.1) rectfill(120-w,2,120,4,11) fillp() ]]
+			line(121-w,4,121,4,0)
+			line(120-w,3,120,3,11)
+			-- todo: 모양 좀 다듬고.... 어디 부딛히면 실드 더 많이 닳아야 할 듯?
 		end
+		
+
+
 	end
 
 	-- 개발용

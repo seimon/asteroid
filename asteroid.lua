@@ -1,5 +1,5 @@
 dev=0
-ver="0.18" -- 2022/07/01
+ver="0.19" -- 2022/07/02
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
@@ -184,7 +184,7 @@ end
 
 -- <space> --------------------
 space=class(sprite)
-function space:init(is_front)
+function space:init()
 	self.spd_x=0.1
 	self.spd_y=0
 	self.stars={}
@@ -197,54 +197,45 @@ function space:init(is_front)
 			spd=base_spd+i/max*base_spd,
 			size=1+rnd(1)
 		}
+		--[[ local r=rnd()
+		local d=5+rndi(50)
+		local x,y=cos(r),sin(r)
+		local spd=1+rnd()
+		return {
+			x=64+x*d,
+			y=64+y*d,
+			sx=x*spd,
+			sy=y*spd,
+			t=3+d*2,
+		} ]]
+
 	end
-	if is_front then
-		for i=1,12 do add(self.stars,make_star(i,12,3)) end
-	else
-		for i=1,50 do add(self.stars,make_star(i,50,1)) end
-	end
+	for i=1,50 do add(self.stars,make_star(i,50,1)) end
 
 	self:show(true)
 	self:on("update",self.on_update)
 end
 
-ptcl_size="11223334443332211000"
-ptcl_thrust_col="c77aa99882211211"
-ptcl_back_col="77666dd1d111"
-ptcl_fire_col="89a7"
 ptcl_size_explosion="56776655443321111000"
-ptcl_col_explosion="77aaa99988888989994444441111"
-ptcl_col_explosion_dust="77982"
-ptcl_col_hit="cc7a82"
 
 function space:_draw()
 	-- stars
+	--[[ for v in all(self.stars) do
+		v.t+=1
+		local x=v.x+v.sx*v.t*0.001
+		local y=v.y+v.sy*v.t*0.001
+		if x>129 or x<-2 or y>129 or y<-2 then x,y=64,64 v.t=3 end
+		v.x,v.y=x,y
+		pset(v.x,v.y,1)
+	end
+	circfill(64,64,6,0) ]]
 	for v in all(self.stars) do
-		--[[ local x=v.x-self.spd_x*v.spd
-		local y=v.y+self.spd_y*v.spd
-		v.x=x>129 and x-129 or x<-2 and x+129 or x
-		v.y=y>129 and y-129 or y<-2 and y+129 or y
-		local x2=v.x+cx
-		local y2=v.y+cy
-		x2=x2>129 and x2-129 or x2<-2 and x2+129 or x2
-		y2=y2>129 and y2-129 or y2<-2 and y2+129 or y2
-		if v.size>1.9 then circfill(x2,y2,1,v.c)
-		else pset(x2,y2,v.c) end ]]
-
-		-- v.x=v.x-self.spd_x*v.spd
-		-- v.y=v.y+self.spd_y*v.spd
-		--[[ coord_loop(v)
-		local v2={x=v.x+cx,y=v.y+cy}
-		coord_loop(v2)
-		if v.size>1.9 then circfill(v2.x,v2.y,1,v.c)
-		else pset(v2.x,v2.y,v.c) end ]]
-
 		local x=v.x-self.spd_x*v.spd
 		local y=v.y+self.spd_y*v.spd
 		v.x=x>129 and x-129 or x<-2 and x+129 or x
 		v.y=y>129 and y-129 or y<-2 and y+129 or y
 
-		local c=rnd()<0.001 and 13 or 1
+		local c=rnd()<0.001 and cc or 1
 		if v.size>1.9 then circfill(v.x,v.y,1,c)
 		else pset(v.x,v.y,c) end
 	end
@@ -252,7 +243,7 @@ function space:_draw()
 	-- particles
 	for i,v in pairs(self.particles) do
 		if v.type=="thrust" then
-			pset(v.x,v.y,11)
+			pset(v.x,v.y,cc)
 			v.x+=v.sx+rnd(4)-2
 			v.y+=v.sy+rnd(4)-2
 			v.sx*=0.93
@@ -273,7 +264,7 @@ function space:_draw()
 			v.x+=v.sx
 			v.y+=v.sy
 			coord_loop(v)
-			pset(v.x,v.y,11)
+			if v.type=="bullet_ufo" then circ(v.x,v.y,1,cc) else pset(v.x,v.y,cc) end
 			if(v.age>v.age_max) del(self.particles,v)
 
 			if v.type=="bullet" then
@@ -301,14 +292,17 @@ function space:_draw()
 				local dist=4+(_ship.use_shield and 5 or 0)
 				local x,y=_ship.x,_ship.y
 				if abs(v.x-x)<=dist and abs(v.y-y)<=dist and get_dist(v.x,v.y,x,y)<=dist then
-					if _ship.use_shield then add_explosion_eff(v.x,v.y,v.sx,v.sy) sfx(2,3)
+					if _ship.use_shield then
+						_ship.shield_timer-=30
+						add_explosion_eff(v.x,v.y,v.sx,v.sy)
+						sfx(2,3)
 					else _ship:kill() end
 					del(self.particles,v)
 				end
 			end
 
 		elseif v.type=="explosion" then
-			circ(v.x,v.y,sub(ptcl_size_explosion,v.age,_)*v.size,11)
+			circ(v.x,v.y,sub(ptcl_size_explosion,v.age,_)*v.size,cc)
 			v.x+=v.sx+rnd(1)-0.5
 			v.y+=v.sy+rnd(1)-0.5
 			v.sx*=0.9
@@ -316,7 +310,7 @@ function space:_draw()
 			if(v.age>18) del(self.particles,v)
 
 		elseif v.type=="explosion_dust" then
-			pset(v.x,v.y,11)
+			pset(v.x,v.y,cc)
 			v.x+=v.sx
 			v.y+=v.sy
 			v.sx*=0.9
@@ -324,7 +318,7 @@ function space:_draw()
 			if(v.age>24) del(self.particles,v)
 
 		elseif v.type=="hit" then
-			pset(v.x,v.y,11)
+			pset(v.x,v.y,cc)
 			v.x+=v.sx
 			v.y+=v.sy
 			v.sx*=0.94
@@ -332,7 +326,7 @@ function space:_draw()
 			if(v.age>12) del(self.particles,v)
 
 		elseif v.type=="line" then
-			line(v.x+v.x1,v.y+v.y1,v.x+v.x2,v.y+v.y2,v.c)
+			line(v.x+v.x1,v.y+v.y1,v.x+v.x2,v.y+v.y2,cc)
 			local p1,p2=rotate(v.x1,v.y1,v.r),rotate(v.x2,v.y2,v.r)
 			v.x+=v.sx
 			v.y+=v.sy
@@ -347,7 +341,7 @@ function space:_draw()
 
 		elseif v.type=="circle" then
 			local r=v.r1+(v.r2-v.r1)*(v.age/v.age_max)
-			circ(v.x,v.y,r,11)
+			circ(v.x,v.y,r,cc)
 			if(v.age>v.age_max) del(self.particles,v)
 
 		elseif v.type=="debug_line" then
@@ -386,7 +380,7 @@ function ship:init()
 	self.head={x=0,y=0}
 	self.fire_spd=1.6
 	self.fire_intv=0
-	self.fire_intv_full=14-(dev==1 and 10 or 0)
+	self.fire_intv_full=12
 	
 	self.use_shield=false
 	self.shield_enable=true
@@ -416,11 +410,10 @@ function ship:_draw()
 end
 
 function ship:draw_ship(x,y)
-	draw_shape(s_ship,x,y,11,self.angle)
-	-- if self.use_shield then circ(x,y,8,11) end
+	draw_shape(s_ship,x,y,cc,self.angle)
 	if self.use_shield then
 		local r=self.shield_timer/self.shield_timer_max
-		draw_shape(s_shield,x,y,11,-f%30/30,false,r)
+		draw_shape(s_shield,x,y,cc,-f%30/30,false,r)
 	end
 end
 
@@ -488,7 +481,7 @@ function ship:on_update()
 	else
 		self.use_shield=false
 		if self.shield_enable then
-			if(self.shield_timer<self.shield_timer_max) self.shield_timer+=1
+			if(self.shield_timer<self.shield_timer_max) self.shield_timer+=0.5
 		else
 			self.shield_timer+=0.2
 			if(self.shield_timer>=self.shield_timer_max) self.shield_enable=true
@@ -535,24 +528,11 @@ function ship:on_update()
 	-- for i,e in pairs(_enemies.list) do
 	local x,y=self.x,self.y
 	for e in all(_enemies.list) do
-		local dist=(e.size==1) and 7+4 or (e.size==2) and 5+4 or 3+4
-		if(self.use_shield) dist+=3
+		local dist=(e.size==1) and 11 or (e.size==2) and 9 or 7
+		if(self.use_shield) dist+=4
 		if abs(e.x-x)<=dist and abs(e.y-y)<=dist and get_dist(e.x,e.y,x,y)<=dist then	
-			
-			-- 단순 속도 교환 방식
-			--[[ local sx=e.spd_x*1.2
-			local sy=e.spd_y*1.2
-			e.spd_x=self.spd_x
-			e.spd_y=self.spd_y
-			e.x+=e.spd_x
-			e.y+=e.spd_y
-			self.spd_x=sx
-			self.spd_y=sy
-			sfx(2,3)
-			local d=atan2(e.x-x,e.y-y)
-			add_hit_eff((x+e.x)/2,(y+e.y)/2,d) ]]
-
 			if self.use_shield then
+				self.shield_timer-=30
 				-- 충돌 방향만 보고 서로 반대로 밀기
 				local d=atan2(e.x-x,e.y-y)
 				local sx,sy=cos(d)*0.35,sin(d)*0.35
@@ -569,7 +549,6 @@ function ship:on_update()
 			elseif not self.is_killed then
 				self:kill()
 			end
-
 		end
 	end
 end
@@ -643,13 +622,11 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 	local c1,c2,c3,c4=0,0,0,0
 	for e in all(self.list) do
 		if(e.size==1) c1+=1
-		-- if(e.size==2) c2+=1
-		-- if(e.size==3) c3+=1
 		if(e.size==4) c4+=1
 	end
 
-	local df=2+gg.score2 -- 난이도(큰 소행성이 리필되는 수 / 2~무제한???)
-	if c1<df and #self.list<10 then
+	local df=min(20,2+gg.score1\2000+gg.score2*5) -- 난이도 2만점마다 증가(큰 소행성이 리필되는 수 2~20)
+	if c1<df and #self.list<8+df then
 		local r=rnd()
 		local x=cos(r)*90
 		local y=sin(r)*90
@@ -665,9 +642,8 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 end
 
 function enemies:_draw()
-
-	-- 주기적으로 소행성 수량 조절
-	if(f%60==0) self:group_update()
+	
+	if(f%60==0) self:group_update() -- 주기적으로 소행성 수량 조절
 
 	for i,e in pairs(self.list) do
 		e.x+=e.spd_x
@@ -681,8 +657,8 @@ function enemies:_draw()
 		end
 
 		if e.size==4 then
-			spr(14,e.x-5,e.y-4,2,2)
-			pset(e.x-4+round(e.count/90*4)*2,e.y,11)
+			pal({[11]=cc}) spr(14,e.x-5,e.y-4,2,2) pal()
+			pset(e.x-4+round(e.count/90*4)*2,e.y,cc)
 			e.count+=1
 			if e.count>=90 then
 				e.count=0
@@ -707,14 +683,14 @@ function enemies:_draw()
 
 		else
 			local shape=(e.size==1) and s_ast1 or (e.size==2) and s_ast2 or s_ast3
-			draw_shape(shape,e.x,e.y,11,e.angle)
+			draw_shape(shape,e.x,e.y,cc,e.angle)
 
 			-- 변두리에 있을 때 맞은편에도 그림(생성 초기는 제외)
 			if not e.is_yeanling then
-				if e.x<4 then draw_shape(shape,e.x+130,e.y,11,e.angle) end
-				if e.y<4 then draw_shape(shape,e.x,e.y+130,11,e.angle) end
-				if e.x>123 then draw_shape(shape,e.x-130,e.y,11,e.angle) end
-				if e.y>123 then draw_shape(shape,e.x,e.y-130,11,e.angle) end
+				if e.x<4 then draw_shape(shape,e.x+130,e.y,cc,e.angle) end
+				if e.y<4 then draw_shape(shape,e.x,e.y+130,cc,e.angle) end
+				if e.x>123 then draw_shape(shape,e.x-130,e.y,cc,e.angle) end
+				if e.y>123 then draw_shape(shape,e.x,e.y-130,cc,e.angle) end
 			end
 		end
 	end
@@ -767,7 +743,6 @@ end
 
 title=class(sprite)
 function title:init()
-	self.c=11
 	self.tx=10
 	self.ty=28
 	self:show(true)
@@ -775,13 +750,13 @@ end
 function title:_draw()
 	local x,y=self.tx,self.ty
 	if gg.is_title then
-		draw_shape(s_title,x,y,self.c,0,true)
-		draw_shape(s_demake,x+15,y+20,self.c,0,true)
-		draw_shape(s_2022,x+30,y+40,self.c,0,true)
-		?get_wave_str("press 🅾️❎ to play"),28,92,self.c
+		draw_shape(s_title,x,y,cc,0,true)
+		draw_shape(s_demake,x+15,y+20,cc,0,true)
+		draw_shape(s_2022,x+30,y+40,cc,0,true)
+		?get_wave_str("press 🅾️❎ to play"),28,92,cc
 
-		?"by 🐱seimon",1,120,self.c
-		printa("v"..ver,128,120,self.c,1)
+		?"by 🐱seimon",1,120,cc
+		printa("v"..ver,128,120,cc,1)
 
 		if gg.key_wait>0 then
 			gg.key_wait-=1
@@ -796,10 +771,10 @@ function title:_draw()
 			_enemies:show(true)
 		end
 	elseif gg.is_gameover then
-		draw_shape(s_game,8,y+12,self.c,0,true)
-		draw_shape(s_over,67,y+12,self.c,0,true)
-		printa("your score "..get_score_str(),63,70,self.c,0.5)
-		?get_wave_str("press 🅾️❎ to coutinue"),18,80,self.c
+		draw_shape(s_game,8,y+12,cc,0,true)
+		draw_shape(s_over,67,y+12,cc,0,true)
+		printa("your score "..get_score_str(),63,70,cc,0.5)
+		?get_wave_str("press 🅾️❎ to coutinue"),18,80,cc
 		_ship:show(false)
 		_enemies:show(false)
 
@@ -835,10 +810,11 @@ end
 
 function score_up(size)
 
-	if size==4 then gg.score1+=20
-	elseif size==3 then gg.score1+=10
-	elseif size==2 then gg.score1+=5
-	elseif size==1 then gg.score1+=2
+	-- 원래는 소행성 크기별로 20,50,100점인데 좀 뻥튀기 함
+	if size==4 then gg.score1+=300
+	elseif size==3 then gg.score1+=50
+	elseif size==2 then gg.score1+=20
+	elseif size==1 then gg.score1+=8
 	end
 
 	if gg.score1>=10000 then
@@ -987,7 +963,6 @@ function add_break_eff(x0,y0,arr,pow,age)
 					x1=-dx,y1=-dy,
 					x2=x2-x1-dx,y2=y2-y1-dy,
 					sx=(rnd()-0.5)*pow,sy=(rnd()-0.5)*pow,
-					c=11,
 					r=(0.1+rnd())*0.02*(rndi(1)-0.5)*pow,
 					age=0,age_max=age+rndi(age)
 				}
@@ -1001,8 +976,8 @@ end
 function print_score(len,x,y)
 	local t0,t1="",get_score_str()
 	for i=1,len-#t1 do t0=t0.."_" end
-	printa(t0,x,y,11,0,true)
-	printa(t1,x+len*4,y,11,1,true)
+	printa(t0,x,y,cc,0,true)
+	printa(t1,x+len*4,y,cc,1,true)
 end
 function get_score_str()
 	-- 소숫점 덧셈 버그 때문에 정수 2개 사용(0.1+0.1=0.199같은 버그)
@@ -1028,7 +1003,7 @@ end
 --------------------------------------------------
 f=0 -- every frame +1
 stage=sprite.new() -- scene graph top level object
-
+cc=11 -- default color 11
 gg={}
 function gg_reset()
 	gg={
@@ -1054,6 +1029,8 @@ function _init()
 	stage:add_child(_ship)
 	stage:add_child(_enemies)
 	stage:add_child(_title)
+
+	menuitem(1,"change color",function() cc=cc>=15 and 6 or cc+1 end)
 end
 function _update60()
 	f+=1
@@ -1068,29 +1045,34 @@ function _draw()
 		-- fillp(0b1010010110100101.1) rectfill(0,0,127,6,0) fillp() -- 망점 가리기
 		-- for i=0,127 do for j=0,6 do pset(i,j,pget(i,j)==0 and 0 or 1) end end -- 좀 무거운 방식이라 개선 필요
 		print_score(8,50,1)
-		palt(3,true) palt(0,false)
+		pal({[11]=cc}) palt(3,true) palt(0,false)
 		for i=0,gg.ships-1 do spr(13,1+i*6,1) end
-		-- spr(_ship.shield_enable and 11 or 12,93,1)
 		spr(_ship.shield_enable and 11 or 12,122,1)
 		palt()
 		local w=_ship.shield_timer/_ship.shield_timer_max*26
 		if w>1 then
-			--[[ rectfill(100,3,100+w,5,0)
-			fillp(0b1010101010101010.1) rectfill(99,2,99+w,4,11) fillp() ]]
-			--[[ rectfill(121-w,3,121,5,0)
-			fillp(0b0101010101010101.1) rectfill(120-w,2,120,4,11) fillp() ]]
+			if(not _ship.shield_enable) fillp(0b0101010101010101.1)
 			line(121-w,4,121,4,0)
-			line(120-w,3,120,3,11)
-			-- todo: 모양 좀 다듬고.... 어디 부딛히면 실드 더 많이 닳아야 할 듯?
+			line(120-w,3,120,3,cc)
+			fillp()
 		end
-		
-
-
 	end
 
-	-- 개발용
 	if dev==1 then
 		print_log()
 		print_system_info()
 	end
 end
+
+--[[ todo list
+- UFO 동작 고도화, 점수가 오를수록 더 어렵게?
+- 배경 별 움직임 바꾸기
+- BGM 깔아주자
+- 효과음 빈 거 채우기
+- 보너스 먹었을 때 이펙트
+- 죽었을 때 화면 전체 이펙트
+
+<추가 고려할 것들>
+- 점수가 오를수록 총알 빨리 나가게?
+- UFO 잡으면 아이템 나오게? 총알 속도 UP, 총알 여러방향 등
+]]

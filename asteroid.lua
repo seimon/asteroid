@@ -1,5 +1,5 @@
 dev=0
-ver="0.19" -- 2022/07/02
+ver="0.20" -- 2022/07/03
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
@@ -267,35 +267,36 @@ function space:_draw()
 			if v.type=="bullet_ufo" then circ(v.x,v.y,1,cc) else pset(v.x,v.y,cc) end
 			if(v.age>v.age_max) del(self.particles,v)
 
-			if v.type=="bullet" then
-				-- hit test bullet & enemy
-				local killed={}
-				for e in all(_enemies.list) do
-					local dist=(e.size==4) and 7 or (e.size==1) and 9 or (e.size==2) and 7 or 5
-					if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
-						score_up(e.size)
-						if(e.size<3) add(killed,{x=e.x,y=e.y,size=e.size})
-						local shape=(e.size==1) and s_ast1 or (e.size==2) and s_ast2 or s_ast3
-						add_break_eff(e.x,e.y,shape)
-						add_explosion_eff(e.x,e.y,v.sx,v.sy)
-						del(self.particles,v)
-						del(_enemies.list,e)
-						sfx(3,3)
-					end
+			-- 적과 충돌 처리
+			local killed={}
+			for e in all(_enemies.list) do
+				local dist=(e.size==4) and 7 or (e.size==1) and 9 or (e.size==2) and 7 or 5
+				if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
+					score_up(e.size)
+					if(e.size<3) add(killed,{x=e.x,y=e.y,size=e.size})
+					local shape=(e.size==1) and s_ast1 or (e.size==2) and s_ast2 or s_ast3
+					add_break_eff(e.x,e.y,shape)
+					add_explosion_eff(e.x,e.y,v.sx,v.sy)
+					del(self.particles,v)
+					del(_enemies.list,e)
+					sfx(3,3)
 				end
-				for e in all(killed) do
-					_enemies:add(e.x+1,e.y+1,e.size+1)
-					_enemies:add(e.x-1,e.y-1,e.size+1)
-				end
-			else
+			end
+			for e in all(killed) do
+				_enemies:add(e.x+1,e.y+1,e.size+1)
+				_enemies:add(e.x-1,e.y-1,e.size+1)
+			end
+
+			-- else
+			if v.type=="bullet_ufo" then
 				-- ship과 충돌 처리
-				local dist=4+(_ship.use_shield and 5 or 0)
+				local dist=4+(_ship.use_shield and 6 or 0)
 				local x,y=_ship.x,_ship.y
 				if abs(v.x-x)<=dist and abs(v.y-y)<=dist and get_dist(v.x,v.y,x,y)<=dist then
 					if _ship.use_shield then
 						_ship.shield_timer-=30
 						add_explosion_eff(v.x,v.y,v.sx,v.sy)
-						sfx(2,3)
+						sfx(3,3)
 					else _ship:kill() end
 					del(self.particles,v)
 				end
@@ -343,6 +344,11 @@ function space:_draw()
 			local r=v.r1+(v.r2-v.r1)*(v.age/v.age_max)
 			circ(v.x,v.y,r,cc)
 			if(v.age>v.age_max) del(self.particles,v)
+
+		elseif v.type=="bonus" then
+			local x=min(1,-17-sin((120-v.age)/240)*20)
+			?"bonus!",x,8,cc
+			if(v.age>120) del(self.particles,v)
 
 		elseif v.type=="debug_line" then
 			local c=6+v.x1%6
@@ -658,9 +664,10 @@ function enemies:_draw()
 
 		if e.size==4 then
 			pal({[11]=cc}) spr(14,e.x-5,e.y-4,2,2) pal()
-			pset(e.x-4+round(e.count/90*4)*2,e.y,cc)
+			pset(e.x-4+(round(e.count/9)%5)*2,e.y,cc)
 			e.count+=1
 			if e.count>=90 then
+				sfx(24,1)
 				e.count=0
 				sfx(23,-1)
 				local angle=atan2(_ship.x-e.x+rnd(10)-5,_ship.y-e.y+rnd(10)-5)
@@ -826,7 +833,8 @@ function score_up(size)
 	if gg.score1\5000+gg.score2*2>gg.bonus_earned then
 		gg.ships=min(gg.ships+1,8)
 		gg.bonus_earned+=1
-		-- todo: 보너스 이펙트, 소리
+		sfx(25,1)
+		add(_space.particles,{type="bonus",age=0})
 	end
 
 end
@@ -1005,7 +1013,7 @@ f=0 -- every frame +1
 stage=sprite.new() -- scene graph top level object
 cc=11 -- default color 11
 gg={}
-function gg_reset()
+gg_reset=function()
 	gg={
 		key_wait=30,
 		is_title=true,
@@ -1066,13 +1074,14 @@ end
 
 --[[ todo list
 - UFO 동작 고도화, 점수가 오를수록 더 어렵게?
-- 배경 별 움직임 바꾸기
+- 여러가지 타입의 UFO
 - BGM 깔아주자
 - 효과음 빈 거 채우기
-- 보너스 먹었을 때 이펙트
 - 죽었을 때 화면 전체 이펙트
+- 화면 맞은편에 그려지는 소행성과 충돌 처리
 
 <추가 고려할 것들>
 - 점수가 오를수록 총알 빨리 나가게?
 - UFO 잡으면 아이템 나오게? 총알 속도 UP, 총알 여러방향 등
+- 우주선 분사력으로 소행성 밀기
 ]]

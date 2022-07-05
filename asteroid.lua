@@ -1,8 +1,42 @@
 dev=0
-ver="0.20" -- 2022/07/03
+ver="0.23" -- 2022/07/05
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
+
+-- <record & playback> --------------------
+_b0=btn
+function record() _bm=1 _bp=1 _bt=0 _bd="" end
+function playback() _bm=2 _bp=1 _bt=0 end
+function btn(p)
+  local b=_b0()
+  if _bm==1 then -- record
+    if b!=_bl then
+      if _bd>"" then _bd=_bd.._bt.."," else _bd="" _bt=0 _bp=1 end
+      _bl=b _bd=_bd..b.."," _bt=0
+    else _bt+=1 end
+    if _b0()==4096 then -- tab to stop recording
+      printh("btnpb={"..sub(_bd,1,#_bd-1).."}\n","@clip")
+      stop()
+    end
+    return _b0(p)
+  elseif _bm==2 then -- playback
+    if _bt>0 then _bt-=1 
+    else
+      _bs=btnpb[_bp]
+      _bt=btnpb[_bp+1]
+      _bp+=2
+      if _bt==nil then _bm=0 end
+    end
+    if p==nil then return _bs
+    elseif band(_bs,2^p)>0 then return true
+    else return false end
+  else
+    return _b0(p)
+  end
+end
+
+
 
 -- <class helper> --------------------
 function class(base)
@@ -135,7 +169,7 @@ function round(n) return flr(n+.5) end
 function swap(v) if v==0 then return 1 else return 0 end end -- 1 0 swap
 function clamp(a,min_v,max_v) return min(max(a,min_v),max_v) end
 function rndf(lo,hi) return lo+rnd()*(hi-lo) end -- random real number between lo and hi
-function rndi(n) return round(rnd()*n) end -- random int
+function rndi(n) return flr(rnd(n)) end -- random int
 function printa(t,x,y,c,align,shadow) -- 0.5 center, 1 right align
 	x-=align*4*#(tostr(t))
 	if (shadow) ?t,x+1,y+1,0
@@ -197,18 +231,6 @@ function space:init()
 			spd=base_spd+i/max*base_spd,
 			size=1+rnd(1)
 		}
-		--[[ local r=rnd()
-		local d=5+rndi(50)
-		local x,y=cos(r),sin(r)
-		local spd=1+rnd()
-		return {
-			x=64+x*d,
-			y=64+y*d,
-			sx=x*spd,
-			sy=y*spd,
-			t=3+d*2,
-		} ]]
-
 	end
 	for i=1,50 do add(self.stars,make_star(i,50,1)) end
 
@@ -220,24 +242,13 @@ ptcl_size_explosion="56776655443321111000"
 
 function space:_draw()
 	-- stars
-	--[[ for v in all(self.stars) do
-		v.t+=1
-		local x=v.x+v.sx*v.t*0.001
-		local y=v.y+v.sy*v.t*0.001
-		if x>129 or x<-2 or y>129 or y<-2 then x,y=64,64 v.t=3 end
-		v.x,v.y=x,y
-		pset(v.x,v.y,1)
-	end
-	circfill(64,64,6,0) ]]
 	for v in all(self.stars) do
 		local x=v.x-self.spd_x*v.spd
 		local y=v.y+self.spd_y*v.spd
 		v.x=x>129 and x-129 or x<-2 and x+129 or x
 		v.y=y>129 and y-129 or y<-2 and y+129 or y
-
-		local c=rnd()<0.001 and cc or 1
-		if v.size>1.9 then circfill(v.x,v.y,1,c)
-		else pset(v.x,v.y,c) end
+		if v.size>1.9 then circfill(v.x,v.y,1,1)
+		else pset(v.x,v.y,1) end
 	end
 
 	-- particles
@@ -706,10 +717,10 @@ end
 
 function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(ufo)
 	local sx,sy,sr=spd_x,spd_y,0
-	if size!=4 then
-		if(sx==nil) sx=(0.1+rnd(0.3))*(rndi(1)-0.5)
-		if(sy==nil) sy=(0.1+rnd(0.3))*(rndi(1)-0.5)
-		sr=(0.5+rnd(1))*(rndi(1)-0.5)*0.01
+	if size<4 then
+		if(sx==nil) sx=(0.1+rnd(0.3))*(rndi(2)-0.5)
+		if(sy==nil) sy=(0.1+rnd(0.3))*(rndi(2)-0.5)
+		sr=(0.5+rnd(1))*(rndi(2)-0.5)*0.01
 	end
 	local e={
 		is_yeanling=yeanling,
@@ -949,7 +960,7 @@ function add_hit_eff(x,y,angle)
 			y=y+rnd(4)-2,
 			sx=sx*(0.7+rnd()*2),
 			sy=sy*(0.7+rnd()*2),
-			age=1+rndi(5)
+			age=1+rndi(6)
 		})
 	end
 end
@@ -971,7 +982,7 @@ function add_break_eff(x0,y0,arr,pow,age)
 					x1=-dx,y1=-dy,
 					x2=x2-x1-dx,y2=y2-y1-dy,
 					sx=(rnd()-0.5)*pow,sy=(rnd()-0.5)*pow,
-					r=(0.1+rnd())*0.02*(rndi(1)-0.5)*pow,
+					r=(0.1+rnd())*0.02*(rndi(2)-0.5)*pow,
 					age=0,age_max=age+rndi(age)
 				}
 				add(_space.particles,v)
@@ -1009,10 +1020,10 @@ end
 
 
 --------------------------------------------------
-f=0 -- every frame +1
-stage=sprite.new() -- scene graph top level object
-cc=11 -- default color 11
-gg={}
+-- btnpb={0,31,32,31,0,204,1,323,0,64,4,39,5,27,4,129,6,59,4,94,0,189,4096}
+-- 스코어 14060
+btnpb={0,173,32,26,0,224,2,29,6,99,4,14,1,87,17,75,21,71,20,4,16,89,0,104,2,14,6,194,22,4,16,94,17,19,16,69,18,74,2,29,6,69,4,169,0,39,4,49,6,14,2,4,0,19,16,154,17,87,21,139,20,54,16,89,18,59,16,224,18,69,16,109,17,75,1,3,33,3,32,159,33,11,1,23,5,31,21,7,20,4,16,44,17,23,21,71,20,34,16,74,17,11,21,31,5,63,21,3,20,89,16,119,18,59,16,59,17,27,21,171,17,3,16,224,0,49,32,179,0,34,4,34,20,14,21,7,17,43,16,44,20,4,22,139,20,14,16,214,18,29,22,89,20,9,16,114,0,89,1,47,17,43,16,114,17,19,21,27,20,4,16,39,18,164,22,54,6,114,4,34,20,104,21,23,20,4,16,89,0,184,4096}
+
 gg_reset=function()
 	gg={
 		key_wait=30,
@@ -1025,10 +1036,13 @@ gg_reset=function()
 		ufo_born=0,
 	}	
 end
-
 function _init()
+	reset()
+	srand(0)
+	f=0 -- every frame +1
+	cc=11 -- default color 11
 	gg_reset()
-	-- music(13,2000,2)
+	stage=sprite.new()
 	_space=space.new()
 	_ship=ship.new()
 	_enemies=enemies.new()
@@ -1037,6 +1051,7 @@ function _init()
 	stage:add_child(_ship)
 	stage:add_child(_enemies)
 	stage:add_child(_title)
+	-- music(13,2000,2)
 
 	menuitem(1,"change color",function() cc=cc>=15 and 6 or cc+1 end)
 end
@@ -1050,8 +1065,6 @@ function _draw()
 
 	-- ui
 	if not (gg.is_title or gg.is_gameover) then
-		-- fillp(0b1010010110100101.1) rectfill(0,0,127,6,0) fillp() -- 망점 가리기
-		-- for i=0,127 do for j=0,6 do pset(i,j,pget(i,j)==0 and 0 or 1) end end -- 좀 무거운 방식이라 개선 필요
 		print_score(8,50,1)
 		pal({[11]=cc}) palt(3,true) palt(0,false)
 		for i=0,gg.ships-1 do spr(13,1+i*6,1) end
@@ -1072,7 +1085,19 @@ function _draw()
 	end
 end
 
+menuitem(4,"🐱demo record",function()
+	_init()
+	record()
+end)
+menuitem(5,"🐱demo play",function()
+	_init()
+	playback()
+end)
+
+
+
 --[[ todo list
+- [최우선] 조작 녹화/재생 모드 추가!
 - UFO 동작 고도화, 점수가 오를수록 더 어렵게?
 - 여러가지 타입의 UFO
 - BGM 깔아주자

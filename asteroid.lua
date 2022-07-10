@@ -1,5 +1,5 @@
 dev=0
-ver="0.24" -- 2022/07/06
+ver="0.28" -- 2022/07/10
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
@@ -293,6 +293,7 @@ function space:_draw()
 					local shape=(e.size==1) and s_ast1 or (e.size==2) and s_ast2 or s_ast3
 					add_break_eff(e.x,e.y,shape)
 					add_explosion_eff(e.x,e.y,v.sx,v.sy)
+					if(e.size==4) add_break_eff(e.x,e.y,shape,2,40) add_explosion_eff(e.x,e.y,v.sx,v.sy,1.6,30)
 					del(self.particles,v)
 					del(_enemies.list,e)
 					sfx(3,3)
@@ -303,7 +304,6 @@ function space:_draw()
 				_enemies:add(e.x-1,e.y-1,e.size+1)
 			end
 
-			-- else
 			if v.type=="bullet_ufo" then
 				-- ship과 충돌 처리
 				local dist=4+(_ship.use_shield and 6 or 0)
@@ -311,6 +311,7 @@ function space:_draw()
 				if abs(v.x-x)<=dist and abs(v.y-y)<=dist and get_dist(v.x,v.y,x,y)<=dist then
 					if _ship.use_shield then
 						_ship.shield_timer-=30
+						shake(30,0.3)
 						add_explosion_eff(v.x,v.y,v.sx,v.sy)
 						sfx(3,3)
 					else _ship:kill() end
@@ -332,7 +333,7 @@ function space:_draw()
 			v.y+=v.sy
 			v.sx*=0.9
 			v.sy*=0.9
-			if(v.age>24) del(self.particles,v)
+			if(v.age>28) del(self.particles,v)
 
 		elseif v.type=="hit" then
 			pset(v.x,v.y,cc)
@@ -555,6 +556,7 @@ function ship:on_update()
 		if abs(e.x-x)<=dist and abs(e.y-y)<=dist and get_dist(e.x,e.y,x,y)<=dist then	
 			if self.use_shield then
 				self.shield_timer-=30
+				shake(30,0.3)
 				-- 충돌 방향만 보고 서로 반대로 밀기
 				local d=atan2(e.x-x,e.y-y)
 				local sx,sy=cos(d)*0.35,sin(d)*0.35
@@ -589,6 +591,7 @@ function ship:kill()
 	self:show(false)
 	self.revive_count=150
 	self:on("update",self.on_killed)
+	shake()
 end
 
 function ship:on_killed()
@@ -604,6 +607,7 @@ function ship:on_killed()
 			gg.is_gameover=true
 			gg.scene_timer=0
 			gg.key_wait=30
+			shake()
 		end
 		self:remove_handler("update",self.on_killed)
 	end
@@ -640,7 +644,6 @@ end
 function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 	if gg.is_gameover then return end
 	srand(f%101)
-	log("? "..f%101)
 
 	local c1,c2,c3,c4=0,0,0,0
 	for e in all(self.list) do
@@ -658,7 +661,7 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 
 	-- 10000점마다 UFO 출현
 	if c4<1 and gg.score1\1000+gg.score2*10>gg.ufo_born then
-		self:add(-10,30+rndi(40),4,0.2,0,true)
+		self:add(-10,40+rndi(40),4,0.2,0,true)
 		gg.ufo_born+=1
 	end
 
@@ -680,10 +683,11 @@ function enemies:_draw()
 		end
 
 		if e.size==4 then
-			pal({[11]=cc}) spr(14,e.x-5,e.y-4,2,2) pal()
+			pal({[11]=cc}) spr(0+e.type*2,e.x-5,e.y-4,2,2) pal()
 			pset(e.x-4+(round(e.count/9)%5)*2,e.y,cc)
+			if(e.type==1 and f%180==0) e.spd_y*=-1 -- UFO 타입1은 지그재그 운행
 			e.count+=1
-			if e.count>=90 then
+			if e.count>=90 and not _ship.is_killed then
 				sfx(24,1)
 				e.count=0
 				sfx(23,-1)
@@ -739,6 +743,10 @@ function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(uf
 		size=size,
 		count=0,
 	}
+	if size==4 then
+		e.type=gg.ufo_born%3
+		if(e.type>0) e.spd_y=0.25
+	end
 	add(self.list,e)
 end
 
@@ -793,6 +801,10 @@ function title:_draw()
 			_ship:reset()
 			_ship:show(true)
 			_enemies:show(true)
+			
+			-- 데모 플레이 반복할 때 같은 상황이 연출되게끔 여기서 리셋
+			f=0
+			srand(0)
 		end
 	elseif gg.is_gameover then
 		draw_shape(s_game,8,y+12,cc,0,true)
@@ -1019,6 +1031,23 @@ function get_score_str()
 	return t
 end
 
+function shaking()
+	if shake_t>0 then
+		local n=0.3+shake_t/10*shake_p
+		if(shake_t%2==0) camera(rnd(n)-n/2,rnd(n)-n/2)
+		shake_t-=1
+	else
+		camera(0,0)
+		stage:remove_handler("update",shaking)
+	end
+end
+function shake(dur,pwr)
+	shake_t=dur or 60
+	shake_p=pwr or 1
+	stage:on("update",shaking)
+end
+
+
 
 
 
@@ -1069,7 +1098,7 @@ function _draw()
 		palt()
 		local w=_ship.shield_timer/_ship.shield_timer_max*26
 		if w>1 then
-			if(not _ship.shield_enable) fillp(0b0101010101010101.1)
+			if(not _ship.shield_enable) fillp(f%30<15 and 0b1111111111111111.1 or 0b0101010101010101.1)
 			line(121-w,4,121,4,0)
 			line(120-w,3,120,3,cc)
 			fillp()
@@ -1084,29 +1113,31 @@ end
 
 
 
+
+
 -- record & playback ---------------------
--- score 32080
--- btnpb={0,143,32,31,0,269,4,54,5,11,1,111,5,55,0,84,4,39,5,15,1,119,5,47,1,7,0,64,2,64,16,69,18,34,16,99,2,44,6,234,4,4,0,59,16,239,18,19,2,29,6,59,4,14,0,14,16,24,20,24,21,47,17,7,16,54,17,23,16,149,17,15,21,27,17,3,16,39,17,11,1,59,5,87,4,69,5,63,4,4,0,84,16,104,17,11,1,11,5,179,4,4,0,99,2,79,6,74,4,4,0,34,16,84,18,114,16,79,18,4,22,109,20,9,16,49,18,4,22,29,20,4,16,159,17,127,16,34,17,87,16,224,20,109,21,59,20,49,21,15,17,7,16,84,0,99,32,164,0,24,2,94,6,49,22,94,20,9,16,169,18,19,2,9,34,4,32,154,0,49,2,24,6,29,22,219,20,9,16,94,17,27,21,43,20,9,16,79,18,94,16,114,18,54,22,114,6,49,0,34,16,114,18,254,22,34,20,59,21,99,20,4,16,214,17,3,1,11,33,11,32,144,0,19,4,29,20,74,22,154,6,9,38,94,34,4,32,484,0,44,18,14,16,64,17,31,21,23,20,9,4,4,0,24,32,19,36,119,32,19,48,34,32,84,0,129,16,79,17,31,21,163,20,4,16,169,17,39,21,155,20,34,16,14,18,104,22,119,20,9,16,114,18,49,22,99,20,4,16,29,0,119,1,31,5,39,21,71,20,114,16,4,0,94,1,55,5,131,0,359,2,14,6,49,22,224,20,4,16,254,18,14,22,84,20,9,16,89,21,131,20,4,16,84,17,39,1,79,5,31,21,7,20,24,18,134,16,199,17,83,21,47,20,9,16,34,18,14,22,104,20,9,16,159,18,24,22,99,6,9,36,4,32,289,0,39,16,119,18,104,16,159,18,74,22,114,6,79,0,104,2,104,18,29,22,94,18,4,16,114,20,39,16,114,18,69,16,124,18,4,22,9,54,4,52,4,36,4,32,274,0,14,16,39,18,69,16,44,20,44,21,47,20,4,16,154,17,3,21,51,20,4,16,139,18,39,16,4,17,19,1,3,5,203,0,79,16,54,18,39,16,69,17,35,21,67,20,4,16,189,17,99,32,154,34,24,2,59,6,19,22,69,20,9,16,69,17,35,1,287,0,4,4,94,6,29,38,29,34,4,32,24,0,24,18,109,16,134,20,4,22,34,16,79,0,34,1,7,5,91,4,4,0,104,4,139,6,254,0,327,32,1,0,253,4096}
--- 초반 소행성 4조각(1회차에서만....???)
-btnpb={0,17,32,16,0,244,16,429,20,4,4,29,6,189,4,4,6,149,4,14,5,95,1,3,0,14,16,89,18,19,16,49,0,4,32,149,33,23,32,19,34,94,2,9,0,59,16,34,18,89,16,79,17,31,16,54,18,99,22,4,6,44,4,74,5,47,1,15,0,64}
+-- 21900점
+btnpb={0,67,32,21,0,184,2,24,6,249,0,139,2,44,6,69,4,109,5,35,1,79,5,63,4,29,6,54,4,4,0,49,16,29,0,29,1,11,5,43,21,7,17,3,16,4,0,49,16,14,0,104,5,131,16,24,18,9,2,64,0,19,5,19,37,63,32,34,0,69,16,14,18,34,2,54,0,24,16,39,5,27,21,3,16,24,0,44,2,14,6,34,4,14,0,94,4,4,6,9,22,14,16,34,0,44,2,4,6,19,4,9,20,4,16,94,17,19,16,19,18,84,16,119,0,14,4,19,6,34,4,14,0,84,4,29,20,24,21,3,17,31,16,134,17,27,16,54,18,64,16,99,18,39,16,94,18,9,2,14,6,144,4,9,0,39,16,34,18,49,16,44,18,74,16,84,17,71,16,54,0,39,4,169,20,14,16,69,18,119,22,79,20,64,21,35,20,39,16,99,0,64,2,54,18,24,22,39,20,9,16,159,17,47,16,194,17,43,16,214,17,11,1,55,5,59,21,75,20,19,16,69,17,91,16,19,20,114,16,64,18,14,16,54,20,4,22,29,20,4,16,89,18,19,6,204,22,14,20,9,16,64,18,74,16,134,17,31,16,144,2,4,6,109,4,4,16,139,18,24,16,19,17,119,1,63,5,31,4,154,6,19,2,189,0,54,2,54,6,9,4,9,20,69,21,51,20,4,16,154,18,69,16,99,18,84,16,34,18,64,22,9,6,99,4,9,0,9,16,44,20,59,21,31,16,114,18,24,22,219,6,4,0,504,4096}
 
 playback_repeat=false
 function set_menu()
 	if not playback_repeat then
-		menuitem(4,"🐱demo record",function() _init() record() end)
-		menuitem(5,"🐱demo play",function() start_playback() end)
+		menuitem(4,"demo play",function() start_playback() end)
+		-- menuitem(5,"demo record",function() _init() record() end)
 	else
-		menuitem(4)
-		menuitem(5,"🐱stop demo play",function()
+		menuitem(4,"stop demo play",function()
+				_bm=0
 				playback_repeat=false
 				_init()
 				set_menu()
 			end)
+		menuitem(5)
 	end
 end
 set_menu()
 
 function start_playback()
+	log_d=nil
 	playback_repeat=true
 	_init()
 	set_menu()
@@ -1114,14 +1145,14 @@ function start_playback()
 end
 
 
+
+
 --[[ todo list
-- [최우선] 조작 녹화/재생 모드 추가!
-- UFO 동작 고도화, 점수가 오를수록 더 어렵게?
-- 여러가지 타입의 UFO
+- [최우선] 조작 녹화/재생 모드 추가! -> 연속 재생할 때 진행이 매번 달라지는 버그 있음
 - BGM 깔아주자
 - 효과음 빈 거 채우기
-- 죽었을 때 화면 전체 이펙트
 - 화면 맞은편에 그려지는 소행성과 충돌 처리
+- 같은 크기의 소행성도 모양 여러가지로
 
 <추가 고려할 것들>
 - 점수가 오를수록 총알 빨리 나가게?

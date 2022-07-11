@@ -1,5 +1,5 @@
 dev=0
-ver="0.28" -- 2022/07/10
+ver="0.30" -- 2022/07/11
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
@@ -21,6 +21,7 @@ function btn(p)
     end
     return _b0(p)
   elseif _bm==2 then -- playback
+		if _b0(4) or _b0(5) then stop_playback() end -- z,x key to stop playback
     if _bt>0 then _bt-=1 
     else
       _bs=btnpb[_bp]
@@ -197,9 +198,12 @@ end
 s_ufo=str_to_arr("6,2,0,5,-6,2,6,2,2,-1,-2,-1,-6,2,-2,-1,-2,-3,2,-3,2,-1")
 s_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
 s_shield=str_to_arr("0,-3,-2,-2,-3,0,-2,2,0,3,2,2,3,0,2,-2,0,-3",3)
-s_ast1=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",2.3)
-s_ast2=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.5)
-s_ast3=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",0.85)
+s_ast10=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",2.3)
+s_ast11=str_to_arr("0,-4,-4,-2,-3,0,-3,3,0,4,1,2,3,2,4,-2,0,-4",2.3)
+s_ast20=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.5)
+s_ast21=str_to_arr("0,-4,-2,-2,-4,-2,-3,1,-3,3,1,4,2,1,4,-1,0,-4",1.6)
+s_ast30=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",1)
+s_ast31=str_to_arr("-4,0,-2,-4,2,-4,4,-2,4,2,0,4,-4,0",0.95)
 s_title_str="0,6,3,0,6,6,10,6,10,4,6,2,6,0,10,0,14,0,x,x,12,0,12,6,x,x,1,4,5,4" -- AST
 s_title_str=s_title_str..",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3" -- E
 s_title_str=s_title_str..",x,x,20,6,20,0,24,0,24,3,21,3,24,6,x,x,25,6,28,6,29,4,29,0,26,0,25,2,25,6" -- RO
@@ -290,10 +294,9 @@ function space:_draw()
 				if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
 					score_up(e.size)
 					if(e.size<3) add(killed,{x=e.x,y=e.y,size=e.size})
-					local shape=(e.size==1) and s_ast1 or (e.size==2) and s_ast2 or s_ast3
-					add_break_eff(e.x,e.y,shape)
+					add_break_eff(e.x,e.y,e.shape)
 					add_explosion_eff(e.x,e.y,v.sx,v.sy)
-					if(e.size==4) add_break_eff(e.x,e.y,shape,2,40) add_explosion_eff(e.x,e.y,v.sx,v.sy,1.6,30)
+					if(e.size==4) add_break_eff(e.x,e.y,s_ufo,2,40) add_explosion_eff(e.x,e.y,v.sx,v.sy,1.6,30)
 					del(self.particles,v)
 					del(_enemies.list,e)
 					sfx(3,3)
@@ -710,15 +713,18 @@ function enemies:_draw()
 			if(e.x>130) del(self.list,e)
 
 		else
-			local shape=(e.size==1) and s_ast1 or (e.size==2) and s_ast2 or s_ast3
-			draw_shape(shape,e.x,e.y,cc,e.angle)
+			-- 크기 테스트용
+			-- local r=(e.size==4) and 7 or (e.size==1) and 9 or (e.size==2) and 7 or 5
+			-- circ(e.x,e.y,r,8)
+			
+			draw_shape(e.shape,e.x,e.y,cc,e.angle)
 
 			-- 변두리에 있을 때 맞은편에도 그림(생성 초기는 제외)
 			if not e.is_yeanling then
-				if e.x<4 then draw_shape(shape,e.x+130,e.y,cc,e.angle) end
-				if e.y<4 then draw_shape(shape,e.x,e.y+130,cc,e.angle) end
-				if e.x>123 then draw_shape(shape,e.x-130,e.y,cc,e.angle) end
-				if e.y>123 then draw_shape(shape,e.x,e.y-130,cc,e.angle) end
+				if e.x<4 then draw_shape(e.shape,e.x+130,e.y,cc,e.angle) end
+				if e.y<4 then draw_shape(e.shape,e.x,e.y+130,cc,e.angle) end
+				if e.x>123 then draw_shape(e.shape,e.x-130,e.y,cc,e.angle) end
+				if e.y>123 then draw_shape(e.shape,e.x,e.y-130,cc,e.angle) end
 			end
 		end
 	end
@@ -726,11 +732,14 @@ function enemies:_draw()
 end
 
 function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(ufo)
-	local sx,sy,sr=spd_x,spd_y,0
+	local sx,sy,sr,sp=spd_x,spd_y,0,s_ufo
 	if size<4 then
 		if(sx==nil) sx=(0.1+rnd(0.3))*(rndi(2)-0.5)
 		if(sy==nil) sy=(0.1+rnd(0.3))*(rndi(2)-0.5)
 		sr=(0.5+rnd(1))*(rndi(2)-0.5)*0.01
+		sp=(size==1) and s_ast10 or (size==2) and s_ast20 or s_ast30
+		-- if(sx>0) sp=(size==1) and s_ast11 or (size==2) and s_ast21 or s_ast31
+		if(#self.list%2<1) sp=(size==1) and s_ast11 or (size==2) and s_ast21 or s_ast31
 	end
 	local e={
 		is_yeanling=yeanling,
@@ -741,6 +750,7 @@ function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(uf
 		spd_y=sy,
 		spd_r=sr,
 		size=size,
+		shape=sp,
 		count=0,
 	}
 	if size==4 then
@@ -752,7 +762,7 @@ end
 
 function enemies:kill_all()
 	for e in all(self.list) do
-		add_break_eff(e.x,e.y,s_ast2,3,60)
+		add_break_eff(e.x,e.y,s_ast20,3,60)
 	end
 	sfx(3,3)
 	self.list={}
@@ -763,7 +773,7 @@ function enemies:kill_center(r)
 	for e in all(self.list) do
 		if abs(cx-e.x)<=r and abs(cy-e.y)<=r and get_dist(cx,cy,e.x,e.y)<=r then
 			del(self.list,e)
-			add_break_eff(e.x,e.y,s_ast2)
+			add_break_eff(e.x,e.y,s_ast20)
 			sfx(3,3)
 		end
 	end
@@ -1052,6 +1062,7 @@ end
 
 
 --------------------------------------------
+cc=11 -- default color 11
 gg_reset=function()
 	gg={
 		key_wait=20,
@@ -1066,7 +1077,6 @@ gg_reset=function()
 end
 function _init()
 	f=0 -- every frame +1
-	cc=11 -- default color 11
 	gg_reset()
 	srand(0)
 	stage=sprite.new()
@@ -1105,6 +1115,12 @@ function _draw()
 		end
 	end
 
+	-- 데모 재생 중 안내 문구
+	if _bm==2 and f>60 and f%60<30 then
+		printa("insert coin or",63,106,cc,0.5,true)
+		printa("press 🅾️❎ to play",28,114,cc,0,true)
+	end
+
 	if dev==1 then
 		print_log()
 		print_system_info()
@@ -1119,23 +1135,6 @@ end
 -- 21900점
 btnpb={0,67,32,21,0,184,2,24,6,249,0,139,2,44,6,69,4,109,5,35,1,79,5,63,4,29,6,54,4,4,0,49,16,29,0,29,1,11,5,43,21,7,17,3,16,4,0,49,16,14,0,104,5,131,16,24,18,9,2,64,0,19,5,19,37,63,32,34,0,69,16,14,18,34,2,54,0,24,16,39,5,27,21,3,16,24,0,44,2,14,6,34,4,14,0,94,4,4,6,9,22,14,16,34,0,44,2,4,6,19,4,9,20,4,16,94,17,19,16,19,18,84,16,119,0,14,4,19,6,34,4,14,0,84,4,29,20,24,21,3,17,31,16,134,17,27,16,54,18,64,16,99,18,39,16,94,18,9,2,14,6,144,4,9,0,39,16,34,18,49,16,44,18,74,16,84,17,71,16,54,0,39,4,169,20,14,16,69,18,119,22,79,20,64,21,35,20,39,16,99,0,64,2,54,18,24,22,39,20,9,16,159,17,47,16,194,17,43,16,214,17,11,1,55,5,59,21,75,20,19,16,69,17,91,16,19,20,114,16,64,18,14,16,54,20,4,22,29,20,4,16,89,18,19,6,204,22,14,20,9,16,64,18,74,16,134,17,31,16,144,2,4,6,109,4,4,16,139,18,24,16,19,17,119,1,63,5,31,4,154,6,19,2,189,0,54,2,54,6,9,4,9,20,69,21,51,20,4,16,154,18,69,16,99,18,84,16,34,18,64,22,9,6,99,4,9,0,9,16,44,20,59,21,31,16,114,18,24,22,219,6,4,0,504,4096}
 
-playback_repeat=false
-function set_menu()
-	if not playback_repeat then
-		menuitem(4,"demo play",function() start_playback() end)
-		-- menuitem(5,"demo record",function() _init() record() end)
-	else
-		menuitem(4,"stop demo play",function()
-				_bm=0
-				playback_repeat=false
-				_init()
-				set_menu()
-			end)
-		menuitem(5)
-	end
-end
-set_menu()
-
 function start_playback()
 	log_d=nil
 	playback_repeat=true
@@ -1143,6 +1142,31 @@ function start_playback()
 	set_menu()
 	playback()
 end
+function stop_playback()
+	_bm=0
+	playback_repeat=false
+	_init()
+	set_menu()
+	sfx(3,3) shake()
+	local x,y=_title.tx,_title.ty
+	add_break_eff(x,y,s_title,3,30)
+	add_break_eff(x+15,y+20,s_demake,3,30)
+	add_break_eff(x+30,y+40,s_2022,3,30)
+end
+
+playback_repeat=false
+function set_menu()
+	if not playback_repeat then
+		menuitem(4,"demo play",start_playback)
+		-- menuitem(5,"demo record",function() _init() record() end) -- 녹화할 때만 켜자
+	else
+		menuitem(4,"stop demo play",stop_playback)
+		menuitem(5)
+	end
+end
+set_menu()
+
+
 
 
 

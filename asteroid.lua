@@ -1,11 +1,11 @@
 dev=0
-ver="0.30" -- 2022/07/11
+ver="0.31" -- 2022/07/12
 
 poke(0X5F5C, 12) poke(0X5F5D, 3) -- Input Delay(default 15, 4)
 poke(0x5f2d, 0x1) -- Use Mouse input
 
 -- <record & playback> --------------------
-_b0=btn
+_b0=btn _bm=0
 function record() _bm=1 _bp=1 _bt=0 _bd="" end
 function playback() _bm=2 _bp=1 _bt=0 end
 function btn(p)
@@ -29,9 +29,7 @@ function btn(p)
       _bp+=2
       if _bt==nil then
 				_bm=0
-				if playback_repeat then
-					start_playback()
-				end
+				stop_playback()
 			end
     end
     if p==nil then return _bs
@@ -313,7 +311,7 @@ function space:_draw()
 				local x,y=_ship.x,_ship.y
 				if abs(v.x-x)<=dist and abs(v.y-y)<=dist and get_dist(v.x,v.y,x,y)<=dist then
 					if _ship.use_shield then
-						_ship.shield_timer-=30
+						_ship.shield_timer-=50
 						shake(30,0.3)
 						add_explosion_eff(v.x,v.y,v.sx,v.sy)
 						sfx(3,3)
@@ -500,10 +498,10 @@ function ship:on_update()
 	end
 
 	-- shield
+	if(self.shield_timer<=0) self.shield_enable=false self.shield_timer=max(self.shield_timer,0)
 	if btn(5) and self.shield_timer>0 and self.shield_enable then
 		self.use_shield=true
 		self.shield_timer-=1
-		if(self.shield_timer<=0) self.shield_enable=false
 	else
 		self.use_shield=false
 		if self.shield_enable then
@@ -515,7 +513,7 @@ function ship:on_update()
 	end
 
 	-- add effect
-	if self.thrust_acc>0 then
+	if self.thrust_acc>0.001 then
 		sfx(4,2)
 		add(_space.particles,
 		{
@@ -558,7 +556,7 @@ function ship:on_update()
 		if(self.use_shield) dist+=4
 		if abs(e.x-x)<=dist and abs(e.y-y)<=dist and get_dist(e.x,e.y,x,y)<=dist then	
 			if self.use_shield then
-				self.shield_timer-=30
+				self.shield_timer-=50
 				shake(30,0.3)
 				-- 충돌 방향만 보고 서로 반대로 밀기
 				local d=atan2(e.x-x,e.y-y)
@@ -662,8 +660,8 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 		self:add(64+x,64+y,1,-x*0.002,-y*0.002,true)
 	end
 
-	-- 10000점마다 UFO 출현
-	if c4<1 and gg.score1\1000+gg.score2*10>gg.ufo_born then
+	-- if c4<1 and gg.score1\1000+gg.score2*10>gg.ufo_born then -- 10000점마다 UFO 출현
+	if c4<1 and gg.score1\2000+gg.score2*5>gg.ufo_born then -- 20000점마다 UFO 출현
 		self:add(-10,40+rndi(40),4,0.2,0,true)
 		gg.ufo_born+=1
 	end
@@ -808,6 +806,7 @@ function title:_draw()
 			add_break_eff(x+15,y+20,s_demake,3,60)
 			add_break_eff(x+30,y+40,s_2022,3,60)
 			gg.is_title=false
+			set_menu()
 			_ship:reset()
 			_ship:show(true)
 			_enemies:show(true)
@@ -1075,10 +1074,11 @@ gg_reset=function()
 		ufo_born=0,
 	}	
 end
+gg_reset()
 function _init()
 	f=0 -- every frame +1
-	gg_reset()
 	srand(0)
+	gg_reset()
 	stage=sprite.new()
 	_space=space.new()
 	_ship=ship.new()
@@ -1094,6 +1094,9 @@ end
 function _update60()
 	f+=1
 	stage:emit_update()
+
+	-- 타이틀에서 아무 것도 안하고 있으면 데모 플레이
+	if(f==480 and _bm==0 and gg.is_title) start_playback()
 end
 function _draw()
 	cls(0)
@@ -1104,7 +1107,7 @@ function _draw()
 		print_score(8,50,1)
 		pal({[11]=cc}) palt(3,true) palt(0,false)
 		for i=0,gg.ships-1 do spr(13,1+i*6,1) end
-		spr(_ship.shield_enable and 11 or 12,122,1)
+		spr(_ship.shield_enable and 11 or f%30<15 and 11 or 12,122,1)
 		palt()
 		local w=_ship.shield_timer/_ship.shield_timer_max*26
 		if w>1 then
@@ -1132,21 +1135,25 @@ end
 
 
 -- record & playback ---------------------
--- 21900점
-btnpb={0,67,32,21,0,184,2,24,6,249,0,139,2,44,6,69,4,109,5,35,1,79,5,63,4,29,6,54,4,4,0,49,16,29,0,29,1,11,5,43,21,7,17,3,16,4,0,49,16,14,0,104,5,131,16,24,18,9,2,64,0,19,5,19,37,63,32,34,0,69,16,14,18,34,2,54,0,24,16,39,5,27,21,3,16,24,0,44,2,14,6,34,4,14,0,94,4,4,6,9,22,14,16,34,0,44,2,4,6,19,4,9,20,4,16,94,17,19,16,19,18,84,16,119,0,14,4,19,6,34,4,14,0,84,4,29,20,24,21,3,17,31,16,134,17,27,16,54,18,64,16,99,18,39,16,94,18,9,2,14,6,144,4,9,0,39,16,34,18,49,16,44,18,74,16,84,17,71,16,54,0,39,4,169,20,14,16,69,18,119,22,79,20,64,21,35,20,39,16,99,0,64,2,54,18,24,22,39,20,9,16,159,17,47,16,194,17,43,16,214,17,11,1,55,5,59,21,75,20,19,16,69,17,91,16,19,20,114,16,64,18,14,16,54,20,4,22,29,20,4,16,89,18,19,6,204,22,14,20,9,16,64,18,74,16,134,17,31,16,144,2,4,6,109,4,4,16,139,18,24,16,19,17,119,1,63,5,31,4,154,6,19,2,189,0,54,2,54,6,9,4,9,20,69,21,51,20,4,16,154,18,69,16,99,18,84,16,34,18,64,22,9,6,99,4,9,0,9,16,44,20,59,21,31,16,114,18,24,22,219,6,4,0,504,4096}
+-- 26280점 플레이(마지막에 터짐)
+-- btnpb={0,7,32,26,0,134,32,79,34,4,38,209,36,9,32,189,38,74,6,44,4,39,20,34,16,49,17,87,16,89,17,23,16,69,18,64,16,79,17,55,16,149,18,49,2,14,6,169,4,9,0,19,16,34,18,34,16,79,20,4,21,35,16,129,22,94,6,19,4,24,0,4,32,184,0,39,4,119,6,29,4,9,20,19,16,39,17,35,16,119,17,79,16,14,48,9,32,109,0,44,4,14,5,35,4,9,16,34,18,24,16,64,17,27,16,44,18,49,16,189,20,94,16,44,18,24,16,74,17,83,21,79,20,9,16,54,17,3,21,27,20,9,16,94,17,31,16,109,18,34,16,49,17,23,16,69,17,31,16,104,18,59,22,54,20,9,16,104,18,54,22,114,16,109,18,64,22,39,20,14,16,44,17,19,21,43,20,4,16,99,18,29,22,104,20,4,16,39,17,55,16,144,18,119,22,4,6,49,0,44,16,19,18,9,22,69,20,9,16,169,21,43,20,4,16,144,18,54,16,144,18,24,22,109,20,4,16,124,18,64,16,109,17,11,21,35,20,4,16,254,18,24,22,174,16,99,21,55,20,4,16,144,18,94,16,44,32,179,0,54,2,19,6,49,22,109,20,4,16,69,18,34,22,114,18,4,16,84,20,199,16,19,1,87,5,19,21,63,20,29,16,144,20,9,21,23,5,23,37,3,32,104,0,89,16,74,18,84,16,114,18,54,16,24,20,54,16,99,17,23,21,43,20,4,16,34,18,89,22,109,20,4,16,119,0,19,2,54,0,14,16,59,0,69,2,4,6,19,22,39,20,9,16,249,18,9,2,44,6,79,4,59,0,314}
+btnpb={0,7,32,26,0,134,32,79,34,4,38,209,36,9,32,189,38,74,6,44,4,39,20,34,16,49,17,87,16,89,17,23,16,69,18,64,16,79,17,55,16,149,18,49,2,14,6,169,4,9,0,19,16,34,18,34,16,79,20,4,21,35,16,129,22,94,6,19,4,24,0,4,32,184,0,39,4,119,6,29,4,9,20,19,16,39,17,35,16,119,17,79,16,14,48,9,32,109,0,44,4,14,5,35,4,9,16,34,18,24,16,64,17,27,16,44,18,49,16,189,20,94,16,44,18,24,16,74,17,83,21,79,20,9,16,54,17,3,21,27,20,9,16,94,17,31,16,109,18,34,16,49,17,23,16,69,17,31,16,104,18,59,22,54,20,9,16,104,18,54,22,114,16,109,18,64,22,39,20,14,16,44,17,19,21,43,20,4,16,99,18,29,22,104,20,4,16,39,17,55,16,144,18,119,22,4,6,49,0,44,16,19,18,9,22,69,20,9,16,169,21,43,20,4,16,144,18,54,16,144,18,24,22,109,20,4,16,124,18,64,16,109,17,11,21,35,20,4,16,254,18,24,22,174,16,99,21,55,20,4,16,144,18,94,16,44,32,179,0,54,2,19,6,49,22,109,20,4,16,69,18,34,22,114,18,4,16,84,20,199,16,19,1,87,5,19,21,63,20,29,16,144,20,9,21,23,5,23,37,3,32,104,0,89,16,74,18,84,16,114,18,54,16,24,20,54,16,99,17,23,21,43,20,4,16,34,18,89,22,109,20,4,16,119,0,19,2,54,0,14,16,59,0,69,2,4,6,19,22,39,20,9,16,249,18,9,2,44,6,79,4,59,0,374}
 
 function start_playback()
 	log_d=nil
-	playback_repeat=true
-	_init()
+	f=0
+	srand(0)
+	-- _init()
 	set_menu()
 	playback()
 end
+
 function stop_playback()
 	_bm=0
-	playback_repeat=false
 	_init()
 	set_menu()
+
+	-- 타이틀로 돌아올 때 펑~ 하면서
 	sfx(3,3) shake()
 	local x,y=_title.tx,_title.ty
 	add_break_eff(x,y,s_title,3,30)
@@ -1156,11 +1163,11 @@ end
 
 playback_repeat=false
 function set_menu()
-	if not playback_repeat then
+	if _bm==0 and gg.is_title then
 		menuitem(4,"demo play",start_playback)
 		-- menuitem(5,"demo record",function() _init() record() end) -- 녹화할 때만 켜자
 	else
-		menuitem(4,"stop demo play",stop_playback)
+		menuitem(4)
 		menuitem(5)
 	end
 end
@@ -1176,10 +1183,12 @@ set_menu()
 - BGM 깔아주자
 - 효과음 빈 거 채우기
 - 화면 맞은편에 그려지는 소행성과 충돌 처리
-- 같은 크기의 소행성도 모양 여러가지로
+- 초기화할 때 소리도 다 꺼줘야 할 듯???(분사음이 들릴 때가 있음)
+- UFO가 너무 자주 나오는데???
 
 <추가 고려할 것들>
 - 점수가 오를수록 총알 빨리 나가게?
+- UFO 잡으면 일정시간 총알 빨리 나가게?
 - UFO 잡으면 아이템 나오게? 총알 속도 UP, 총알 여러방향 등
 - 우주선 분사력으로 소행성 밀기
 ]]

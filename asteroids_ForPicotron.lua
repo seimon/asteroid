@@ -1,5 +1,5 @@
-dev=0
-ver="0.1" -- 2023/01/06
+dev=false
+ver="0.2" -- 2023/01/08
 sw=480
 sh=270
 
@@ -179,14 +179,15 @@ s_title_str="0,6,3,0,6,6,10,6,10,4,6,2,6,0,10,0,14,0,x,x,12,0,12,6,x,x,1,4,5,4" 
 s_title_str=s_title_str..",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3" -- E
 s_title_str=s_title_str..",x,x,20,6,20,0,24,0,24,3,21,3,24,6,x,x,25,6,28,6,29,4,29,0,26,0,25,2,25,6" -- RO
 s_title_str=s_title_str..",x,x,30,0,32,0,x,x,31,0,31,6,x,x,30,6,32,6" -- I
-s_title_str=s_title_str..",x,x,33,6,36,6,37,4,37,2,36,0,33,0,33,6,x,x,38,6,42,6,42,4,38,2,38,0,42,0" -- DS
+s_title_str=s_title_str..",x,x,33,6,36,6,37,4,37,2,36,0,33,0,33,6,x,x,38,5,38,6,42,6,42,4,38,2,38,0,42,0,42,1" -- DS
 -- s_title=str_to_arr(s_title_str,2.5)
 -- s_demake=str_to_arr("0,0,0,6,3,6,4,4,4,2,3z,0,0,0,x,x,9,0,5,0,5,6,10,6,10,0,13,6,16,0,16,6,19,0,22,6,22,0,x,x,31,0,27,0,27,6,31,6,x,x,5,3,8,3,x,x,17,4,21,4,x,x,26,0,22,3,26,6,x,x,27,3,30,3",2.5)
 -- s_2022=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,15,4,15,6,19,6",2.5)
 s_title=str_to_arr(s_title_str,4)
 s_demake=str_to_arr("0,0,0,6,3,6,4,4,4,2,3,0,0,0,x,x,9,0,5,0,5,6,10,6,10,0,13,6,16,0,16,6,19,0,22,6,22,0,x,x,31,0,27,0,27,6,31,6,x,x,5,3,8,3,x,x,17,4,21,4,x,x,26,0,22,3,26,6,x,x,27,3,30,3",4)
 s_2022=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,15,4,15,6,19,6",4)
-s_2023=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,17,3,19,4,19,6,15,6",4)
+-- s_2023=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,17,3,19,4,19,6,15,6",4)
+s_2023=str_to_arr("0,1,0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,1,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,1,15,0,19,0,19,2,17,3,19,4,19,6,15,6,15,5",4)
 -- s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",2.5)
 -- s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",2.5)
 s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",4)
@@ -227,8 +228,6 @@ function space:init()
 
 	local function make_star(i,max,base_spd)
 		return {
-			-- x=rnd(127),
-			-- y=rnd(127),
 			x=rnd(sw),
 			y=rnd(sh),
 			spd=base_spd+i/max*base_spd,
@@ -246,12 +245,12 @@ ptcl_size_explosion="56776655443321111000"
 function space:_draw()
 	-- stars
 	for v in all(self.stars) do
-		local x=v.x-self.spd_x*v.spd
+		local x=v.x-self.spd_x*v.spd*gg.spd_multiplier
 		local y=v.y+self.spd_y*v.spd
 		v.x=x>sw+1 and x-sw-1 or x<-2 and x+sw+1 or x
 		v.y=y>sh+1 and y-sh-1 or y<-2 and y+sh+1 or y
-		if v.size>1.9 then circfill(v.x,v.y,1,1)
-		else pset(v.x,v.y,1) end
+		if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.003 and 13 or 1)
+		else pset(v.x,v.y,rnd()<0.003 and 13 or 1) end
 	end
 
 	-- particles
@@ -262,7 +261,7 @@ function space:_draw()
 			v.y+=v.sy+rnd(4)-2
 			v.sx*=0.93
 			v.sy*=0.93
-			if(v.age>6) del(self.particles,v)
+			if(v.age>10) del(self.particles,v)
 
 	elseif v.type=="bullet" or v.type=="bullet_ufo" then
 			v.x+=v.sx
@@ -276,7 +275,7 @@ function space:_draw()
 			for e in all(_enemies.list) do
 				local dist=(e.size==4) and 7 or (e.size==1) and 9 or (e.size==2) and 7 or 5
 				if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
-					score_up(e.size)
+					if(v.type=="bullet") score_up(e.size)
 					if(e.size<3) add(killed,{x=e.x,y=e.y,size=e.size})
 					add_break_eff(e.x,e.y,e.shape)
 					add_explosion_eff(e.x,e.y,v.sx,v.sy)
@@ -350,8 +349,8 @@ function space:_draw()
 			if(v.age>v.age_max) del(self.particles,v)
 
 		elseif v.type=="bonus" then
-			local x=min(2,-17-sin((120-v.age)/240)*20)
-			?"BONUS!",x,13,cc
+			local x=min(3,-16-sin((120-v.age)/240)*20)
+			?"BONUS!",x,14,cc
 			if(v.age>120) del(self.particles,v)
 
 		elseif v.type=="debug_line" then
@@ -390,7 +389,7 @@ function ship:init()
 	self.tail={x=0,y=0}
 	self.head={x=0,y=0}
 	self.fire_spd=2.0
-	self.fire_intv=0
+	self.fire_intv=8
 	self.fire_intv_full=8
 	
 	self.use_shield=false
@@ -438,8 +437,9 @@ end
 
 function ship:on_update()
 
-	if not self.draw then return end
-	
+	-- if not self.draw then return end
+	if not self.__show then return end
+
 	-- rotation
 	if btn(0) then self.angle_acc+=self.angle_acc_power
 	elseif btn(1) then self.angle_acc-=self.angle_acc_power end
@@ -667,10 +667,13 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 		self:add(sw/2+x,sh/2+y,1,-x*0.001,-y*0.001,true)
 	end
 
-	if c4<1 and gg.score1\2000+gg.score2*5>gg.ufo_born then -- 20000점마다 UFO 출현
-		-- self:add(-10,sh/2+rndi(80)-40,4,0.2,0,true)
-		self:add(-10,sh/2+rndi(80)-40,4,0.4,0,true)
+	-- 20000점마다 UFO 출현 + 게임 속도 빨라짐
+	if c4<1 and gg.score1\2000+gg.score2*5>gg.ufo_born then 
+		local sx=min(1,0.4*gg.spd_multiplier)
+		self:add(-3,sh/2+rndi(100)-50,4,sx,0,true)
+		if(gg.ufo_born>20) self:add(sw+3,sh/2+rndi(100)-50,4,-sx,0,true) -- 후반에는 양쪽에서 동시 출현
 		gg.ufo_born+=1
+		gg.spd_multiplier+=0.1
 	end
 
 end
@@ -687,6 +690,9 @@ function enemies:_draw()
 		if e.is_yeanling then
 			if(e.x>5 and e.x<sw-6 and e.y>5 and e.y<sh-6) e.is_yeanling=false
 		else
+			if e.size==4 then -- UFO는 화면 좌우 밖으로 나가면 사라짐
+				if(e.x>sw+2 or e.x<-2) del(self.list,e)
+			end
 			coord_loop(e)
 		end
 
@@ -696,12 +702,13 @@ function enemies:_draw()
 			draw_shape(s_ufo,e.x,e.y,cc)
 
 			pset(e.x-4+(round(e.count/9)%5)*2,e.y,cc)
-			if(e.type==1 and f%240==0) e.spd_y*=-1 -- UFO 타입1은 지그재그 운행
+			-- if(e.type==1 and f%240==0) e.spd_y*=-1 -- UFO 타입1은 지그재그 운행
+			if(e.type==1) e.spd_y=e.spd_x*sin(e.x%200/200) -- UFO 타입1은 지그재그 운행
 			e.count+=1
 			-- if e.count>=100 and not _ship.is_killed then
 			-- if e.count>=20 and not _ship.is_killed then
 			-- ufo가 새로 나올 때마다 총알 인터벌이 점점 짧아짐
-			if e.count>=max(20,100-gg.ufo_born*5) and not _ship.is_killed then
+			if e.count>=max(30,100-gg.ufo_born*5) and not _ship.is_killed then
 				-- sfx(24,1)
 				e.count=0
 				-- sfx(23,-1)
@@ -711,10 +718,12 @@ function enemies:_draw()
 				add(_space.particles,
 				{
 					type="bullet_ufo",
-					x=e.x+sx*7,
-					y=e.y+sy*7,
-					sx=sx*0.6*min(3,1+gg.ufo_born/5),
-					sy=sy*0.6*min(3,1+gg.ufo_born/5),
+					x=e.x+sx*9,
+					y=e.y+sy*9,
+					-- sx=sx*0.6*min(3,1+gg.ufo_born/5),
+					-- sy=sy*0.6*min(3,1+gg.ufo_born/5),
+					sx=sx*min(2,gg.spd_multiplier),
+					sy=sy*min(2,gg.spd_multiplier),
 					age_max=300,
 					age=1
 				})
@@ -722,7 +731,7 @@ function enemies:_draw()
 
 			-- UFO는 화면 밖으로 나가면 사라짐
 			-- if(e.x>130) del(self.list,e)
-			if(e.x>sw+2) del(self.list,e)
+			-- if(e.x>sw+4 or e.x<-4) del(self.list,e)
 
 		else
 			-- 크기 테스트용
@@ -746,13 +755,15 @@ end
 function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(ufo)
 	local sx,sy,sr,sp=spd_x,spd_y,0,s_ufo
 	if size<4 then
-		-- if(sx==nil) sx=(0.1+rnd(0.3))*(rndi(2)-0.5)
-		-- if(sy==nil) sy=(0.1+rnd(0.3))*(rndi(2)-0.5)
-		if(sx==nil) sx=(0.2+rnd(0.3))*(rndi(2)-0.5)
-		if(sy==nil) sy=(0.2+rnd(0.3))*(rndi(2)-0.5)
+		-- if(sx==nil) sx=(0.2+rnd(0.3))*(rndi(2)-0.5)
+		-- if(sy==nil) sy=(0.2+rnd(0.3))*(rndi(2)-0.5)
+		if sx==nil then
+			local spd_base=(0.2+rnd(0.3))*min(2,gg.spd_multiplier)
+			sx=spd_base*(rndi(2)-0.5)
+			sy=spd_base*(rndi(2)-0.5)
+		end
 		sr=(0.5+rnd(1))*(rndi(2)-0.5)*0.01
 		sp=(size==1) and s_ast10 or (size==2) and s_ast20 or s_ast30
-		-- if(sx>0) sp=(size==1) and s_ast11 or (size==2) and s_ast21 or s_ast31
 		if(#self.list%2<1) sp=(size==1) and s_ast11 or (size==2) and s_ast21 or s_ast31
 	end
 	local e={
@@ -769,7 +780,7 @@ function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(uf
 	}
 	if size==4 then
 		e.type=gg.ufo_born%3
-		if(e.type>0) e.spd_y=0.3
+		if(e.type>0) e.spd_y=e.spd_x
 	end
 	add(self.list,e)
 end
@@ -806,7 +817,7 @@ function title:init()
 	-- self.tx=sw/2-54
 	-- self.ty=sh/2-38
 	self.tx=sw/2-84
-	self.ty=sh/2-50
+	self.ty=sh/2-56
 	self:show(true)
 end
 function title:_draw()
@@ -818,8 +829,8 @@ function title:_draw()
 		-- rect(sw/2-60,sh/2-30,sw/2+60,sh/2+30,cc+4)
 		-- rect(sw/2-50,sh/2-20,sw/2+50,sh/2+20,cc+5)
 		draw_shape(s_title,x,y,cc,0,true)
-		draw_shape(s_demake,x+22,y+30,cc,0,true)
-		draw_shape(s_2023,x+45,y+60,cc,0,true)
+		draw_shape(s_demake,x+22,y+32,cc,0,true)
+		draw_shape(s_2023,x+45,y+64,cc,0,true)
 		
 		-- ?get_wave_str("press 🅾️❎ to play"),28,92,cc
 		-- ?get_wave_str("press any key to play"),28,92,cc
@@ -850,12 +861,10 @@ function title:_draw()
 			-- srand(0)
 		end
 	elseif gg.is_gameover then
-		-- draw_shape(s_game,sw/2-92,y+28,cc,0,true)
-		-- draw_shape(s_over,sw/2+8,y+28,cc,0,true)
-		draw_shape(s_game,sw/2-92,y,cc,0,true)
-		draw_shape(s_over,sw/2+8,y,cc,0,true)
+				draw_shape(s_game,sw/2-91,y,cc,0,true)
+		draw_shape(s_over,sw/2+7,y,cc,0,true)
 		?"YOUR SCORE",sw/2-24,y+40,cc
-		print_score(8,sw/2,sh/2+4)
+		print_score(8,sw/2,sh/2+2)
 		-- ?get_wave_str("press 🅾️❎ to coutinue"),18,80,cc
 		-- ?get_wave_str("press any key to coutinue"),18,80,cc
 		?"Press any key to continue",sw/2-62,sh/2+34,f%60<30 and cc or 0
@@ -912,10 +921,10 @@ function score_up(size)
 
 	-- 5만점마다 보너스
 	if gg.score1\5000+gg.score2*2>gg.bonus_earned then
-		gg.ships=min(gg.ships+1,8)
+		gg.ships=min(gg.ships+1,gg.ships_max)
 		gg.bonus_earned+=1
 		-- sfx(25,1)
-		add(_space.particles,{type="bonus",age=0})
+		if(gg.ships<=gg.ships_max) add(_space.particles,{type="bonus",age=0})
 	end
 
 end
@@ -928,8 +937,8 @@ end
 
 function coord_loop(a)
 	local x,y=a.x,a.y
-	-- x=x>131 and x-131 or x<-4 and x+131 or x
-	-- y=y>131 and y-131 or y<-4 and y+131 or y
+	-- x=x>sw+3 and x-sw-3 or x<-4 and x+sw+3 or x
+	-- y=y>sh+3 and y-sh-3 or y<-4 and y+sh+3 or y
 	x=x>sw+3 and x-sw-3 or x<-4 and x+sw+3 or x
 	y=y>sh+3 and y-sh-3 or y<-4 and y+sh+3 or y
 	a.x=x a.y=y
@@ -956,10 +965,8 @@ function draw_shape(arr,x,y,c,angle,with_wave,draw_ratio)
 			local p2=rotate(arr[i],arr[i+1],angle)
 			if p1.x!="x" then
 				if with_wave then
-					-- local dy1=sin((p1.x+p1.y-f)%60/60)*2
-					-- local dy2=sin((p2.x+p2.y-f)%60/60)*2
-					local dy1=sin((p1.x+p1.y-t()*60)%60/60)*2
-					local dy2=sin((p2.x+p2.y-t()*60)%60/60)*2
+					local dy1=sin((p1.x+p1.y-t()*60)%80/80)*3
+					local dy2=sin((p2.x+p2.y-t()*60)%80/80)*3
 					line(p1.x+x,p1.y+y+dy1,p2.x+x,p2.y+y+dy2,c)
 				else
 					line(p1.x+x,p1.y+y,p2.x+x,p2.y+y,c)
@@ -1065,6 +1072,10 @@ function add_break_eff(x0,y0,arr,pow,age)
 	end
 end
 
+function shake_diff()
+	return stage.__on_shake and (rnd(12)-6)*shake_t/100 or 0 -- +-6 -> 0
+end
+
 function print_score(len,x,y)
 	-- local t0,t1="",get_score_str()
 	-- for i=1,len-#t1 do t0=t0.."_" end
@@ -1074,19 +1085,20 @@ function print_score(len,x,y)
 	-- circ(x,y,30,cc-1)
 	-- circ(x,y,38,cc-1)
 	-- circ(x,y,44,cc-1)
-	local function shake_diff()
-		return stage.__on_shake and (rnd(12)-6)*shake_t/100 or 0
-	end
 
 	local t0,t1="",get_score_str()
 	local lx=x-len/2*9-8
 	for i=1,len-#t1 do t1="_"..t1 end
+	if _ship.y<20 and _ship.x<sw/2+50 and _ship.x>sw/2-50 then
+		for i=0,7 do poke(0x5500+i,i%2==0 and 85 or 170) end -- fill pattern
+	end
 	for i=1,#t1 do
 		local n=sub(t1,i,i)
 		local x2=lx+i*9+shake_diff()
 		local y2=y+shake_diff()
-		draw_shape(s_num[n],x2,y2,cc,shake_diff()*0.006)
+		draw_shape(s_num[n],x2,y2,cc)
 	end
+	fillp()
 
 end
 function get_score_str()
@@ -1144,9 +1156,20 @@ gg_reset=function()
 		score1=0,
 		score2=0,
 		ships=3,
+		ships_max=10,
 		bonus_earned=0,
 		ufo_born=0,
-	}	
+		spd_multiplier=1,
+	}
+	if dev then
+		gg.score1=0
+		gg.score2=9
+		gg.ufo_born=0
+		gg.spd_multiplier=1
+		-- gg.ships=0
+		-- gg.is_title=false
+		-- gg.is_gameover=true
+	end
 end
 gg_reset()
 function _init()
@@ -1185,13 +1208,16 @@ function _draw()
 		-- spr(_ship.shield_enable and 11 or f%30<15 and 11 or 12,122,1)
 		-- palt()
 
-		-- for i=0,gg.ships-1 do draw_shape(s_ship,7+i*9,6,cc) end
-		for i=0,gg.ships-1 do draw_shape(s_ship2,7+i*10,7,cc) end
+		-- remain ships
+		for i=0,gg.ships-1 do
+			draw_shape(s_ship2,7+i*10+shake_diff(),7+shake_diff(),cc)
+		end
 
+		-- shield icon
 		if _ship.shield_enable then draw_shape(s_shield_o,sw-10,3,cc)
 		elseif f%30<15 then draw_shape(s_shield_x,sw-10,3,cc) end
 
-		-- local w=_ship.shield_timer/_ship.shield_timer_max*26
+		-- shield
 		local w=_ship.shield_timer/_ship.shield_timer_max*50
 		if w>1 then
 			-- if(not _ship.shield_enable) fillp(f%30<15 and 0b1111111111111111.1 or 0b0101010101010101.1)
@@ -1203,5 +1229,19 @@ function _draw()
 			line(sw-14-w,6,sw-14,6,cc)
 			fillp()
 		end
+
+		-- shake effect
+		if stage.__on_shake then
+			local d=flr(abs(shake_diff()*4))
+			for i=1,d do
+				local y=rnd(sh-4)
+				rectfill(0,y,sw,y+10+d*4,32)
+			end
+		end
+	end
+
+	if dev then
+		print("UFO BORN : "..gg.ufo_born,3,60,cc)
+		print("SPEED : "..gg.spd_multiplier,3,70,cc)
 	end
 end

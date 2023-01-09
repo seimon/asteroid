@@ -1,5 +1,5 @@
 dev=false
-ver="0.2" -- 2023/01/08
+ver="0.3" -- 2023/01/09
 sw=480
 sh=270
 
@@ -249,8 +249,8 @@ function space:_draw()
 		local y=v.y+self.spd_y*v.spd
 		v.x=x>sw+1 and x-sw-1 or x<-2 and x+sw+1 or x
 		v.y=y>sh+1 and y-sh-1 or y<-2 and y+sh+1 or y
-		if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.003 and 13 or 1)
-		else pset(v.x,v.y,rnd()<0.003 and 13 or 1) end
+		if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.003 and 12 or 1)
+		else pset(v.x,v.y,rnd()<0.003 and 12 or 1) end
 	end
 
 	-- particles
@@ -378,13 +378,13 @@ function ship:init()
 	self.spd=0
 	self.spd_x=0
 	self.spd_y=0
-	self.spd_max=1.3
+	self.spd_max=1.5
 	self.angle=0
 	self.angle_acc=0
 	self.angle_acc_power=0.0009
 	self.thrust=0
 	self.thrust_acc=0
-	self.thrust_power=0.0008
+	self.thrust_power=0.0009
 	self.thrust_max=1.0
 	self.tail={x=0,y=0}
 	self.head={x=0,y=0}
@@ -459,8 +459,8 @@ function ship:on_update()
 	local thr_y=sin(self.angle)*self.thrust
 	self.spd_x+=thr_x
 	self.spd_y+=thr_y
-	self.spd_x*=0.99
-	self.spd_y*=0.99
+	self.spd_x*=0.997
+	self.spd_y*=0.997
 
 	-- local tx=self.x+self.spd_x
 	-- local ty=self.y+self.spd_y
@@ -1089,7 +1089,7 @@ function print_score(len,x,y)
 	local t0,t1="",get_score_str()
 	local lx=x-len/2*9-8
 	for i=1,len-#t1 do t1="_"..t1 end
-	if _ship.y<20 and _ship.x<sw/2+50 and _ship.x>sw/2-50 then
+	if not _ship.is_killed and _ship.y<20 and _ship.x<sw/2+50 and _ship.x>sw/2-50 then
 		for i=0,7 do poke(0x5500+i,i%2==0 and 85 or 170) end -- fill pattern
 	end
 	for i=1,#t1 do
@@ -1195,8 +1195,18 @@ function _update()
 
 	
 end
+
+-- clsp={0x7f7f,0xbfbf,0xdfdf,0xefef,0xf7f7,0xfbfb,0xfdfd,0xfefe} -- 4x2에 점 하나씩 스캔라인 순환
+clsp={0x5f5f,0xafaf,0xf5f5,0xfafa} -- 2x2에 점 하나씩 스캔라인 순환
+clsc={11,27,3,19,1,18} -- 이전 프레임의 색상을 점점 어둡게
+
 function _draw()
-	cls(0)
+	-- cls(0)
+	for i=1,#clsc-1 do poke(0x8000+clsc[i],clsc[i+1]) end
+	fillp(clsp[flr((t()*30)%#clsp+1)])
+	rectfill(0,0,sw,sh,32)
+	fillp()
+
 	stage:render(0,0)
 
 	-- ui
@@ -1245,3 +1255,8 @@ function _draw()
 		print("SPEED : "..gg.spd_multiplier,3,70,cc)
 	end
 end
+
+
+-- <TODO LIST>
+-- 죽을 때 화면 지직거리는 효과 다듬기
+-- 소행성 분리되는 조각이 서로 반대 방향으로 날아가게

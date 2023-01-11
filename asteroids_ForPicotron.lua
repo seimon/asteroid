@@ -1,5 +1,5 @@
 dev=false
-ver="0.4" -- 2023/01/10
+ver="0.5" -- 2023/01/11
 sw=480
 sh=270
 
@@ -164,17 +164,13 @@ function str_to_arr(str,scale)
 	end
 	return arr
 end
--- s_ufo=str_to_arr("-5,-1,5,-1,3,-4,-3,-4,-5,-1,-5,1,-3,4,3,4,5,1,-5,1,x,x,-3,-1,-3,1,x,x,-1,-1,-1,1,x,x,1,-1,1,1,x,x,3,-1,3,1,x,x,5,-1,5,1")
-s_ufo=str_to_arr("-5,-1,5,-1,2,-4,-2,-4,-5,-1,-5,1,-2,4,2,4,5,1,-5,1,x,x,-3,-1,-3,1,x,x,-1,-1,-1,1,x,x,1,-1,1,1,x,x,3,-1,3,1,x,x,5,-1,5,1")
+-- s_ufo=str_to_arr("-5,-1,5,-1,2,-4,-2,-4,-5,-1,-5,1,-2,4,2,4,5,1,-5,1,x,x,-3,-1,-3,1,x,x,-1,-1,-1,1,x,x,1,-1,1,1,x,x,3,-1,3,1,x,x,5,-1,5,1")
+s_ufo=str_to_arr("-1,-3,1,-3,2,-1,5,1,2,3,-2,3,-5,1,-2,-1,-1,-3,x,x,-2,-1,2,-1,x,x,-5,1,5,1",2)
 s_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
 s_ship2=str_to_arr("0,-4,4,4,0,2,-4,4,0,-4") -- remain ships
 s_shield=str_to_arr("0,-3,-2,-2,-3,0,-2,2,0,3,2,2,3,0,2,-2,0,-3",3)
--- s_ast10=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",2.3)
--- s_ast11=str_to_arr("0,-4,-4,-2,-3,0,-3,3,0,4,1,2,3,2,4,-2,0,-4",2.3)
 s_ast10=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",3)
 s_ast11=str_to_arr("0,-4,-4,-2,-3,0,-3,3,0,4,1,2,3,2,4,-2,0,-4",3)
--- s_ast20=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.5)
--- s_ast21=str_to_arr("0,-4,-2,-2,-4,-2,-3,1,-3,3,1,4,2,1,4,-1,0,-4",1.6)
 s_ast20=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.8)
 s_ast21=str_to_arr("0,-4,-2,-2,-4,-2,-3,1,-3,3,1,4,2,1,4,-1,0,-4",1.9)
 s_ast30=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",1)
@@ -184,16 +180,10 @@ s_title_str=s_title_str..",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3" -- E
 s_title_str=s_title_str..",x,x,20,6,20,0,24,0,24,3,21,3,24,6,x,x,25,6,28,6,29,4,29,0,26,0,25,2,25,6" -- RO
 s_title_str=s_title_str..",x,x,30,0,32,0,x,x,31,0,31,6,x,x,30,6,32,6" -- I
 s_title_str=s_title_str..",x,x,33,6,36,6,37,4,37,2,36,0,33,0,33,6,x,x,38,5,38,6,42,6,42,4,38,2,38,0,42,0,42,1" -- DS
--- s_title=str_to_arr(s_title_str,2.5)
--- s_demake=str_to_arr("0,0,0,6,3,6,4,4,4,2,3z,0,0,0,x,x,9,0,5,0,5,6,10,6,10,0,13,6,16,0,16,6,19,0,22,6,22,0,x,x,31,0,27,0,27,6,31,6,x,x,5,3,8,3,x,x,17,4,21,4,x,x,26,0,22,3,26,6,x,x,27,3,30,3",2.5)
--- s_2022=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,15,4,15,6,19,6",2.5)
 s_title=str_to_arr(s_title_str,4)
 s_demake=str_to_arr("0,0,0,6,3,6,4,4,4,2,3,0,0,0,x,x,9,0,5,0,5,6,10,6,10,0,13,6,16,0,16,6,19,0,22,6,22,0,x,x,31,0,27,0,27,6,31,6,x,x,5,3,8,3,x,x,17,4,21,4,x,x,26,0,22,3,26,6,x,x,27,3,30,3",4)
 s_2022=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,15,4,15,6,19,6",4)
--- s_2023=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,17,3,19,4,19,6,15,6",4)
 s_2023=str_to_arr("0,1,0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,1,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,1,15,0,19,0,19,2,17,3,19,4,19,6,15,6,15,5",4)
--- s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",2.5)
--- s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",2.5)
 s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",4)
 s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",4)
 s_circle={}
@@ -280,7 +270,7 @@ function space:_draw()
 			-- 적과 충돌 처리
 			local killed={}
 			for e in all(_enemies.list) do
-				local dist=(e.size==4) and 7 or (e.size==1) and 11 or (e.size==2) and 8 or 5
+				local dist=(e.size==4) and 8 or (e.size==1) and 11 or (e.size==2) and 8 or 5
 				if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
 					if(v.type=="bullet") score_up(e.size)
 					if(e.size<3) add(killed,{x=e.x,y=e.y,size=e.size})
@@ -397,9 +387,12 @@ function ship:init()
 	self.thrust_max=1.0
 	self.tail={x=0,y=0}
 	self.head={x=0,y=0}
-	self.fire_spd=2.0
+	self.fire_spd=2.0+0.5
+	self.bullet_remain=5
+	self.bullet_remain_max=5
 	self.fire_intv=8
 	self.fire_intv_full=8
+	self.fire_intv_max=30
 	
 	self.use_shield=false
 	self.shield_enable=true
@@ -481,12 +474,26 @@ function ship:on_update()
 
 	-- fire
 	self.fire_intv-=1
+	if self.fire_intv<-self.fire_intv_max then
+		self.fire_intv=0
+		self.bullet_remain=self.bullet_remain_max
+	end
+
 	if btn(4) and self.fire_intv<=0 then
 
 		if(dev) score_up(4)
 
 		-- sfx(23,-1)
-		self.fire_intv=self.fire_intv_full
+
+		-- self.fire_intv=self.fire_intv_full
+		if self.bullet_remain<=1 then
+			self.fire_intv=self.fire_intv_max
+			self.bullet_remain=self.bullet_remain_max
+		else
+			self.bullet_remain-=1
+			self.fire_intv=self.fire_intv_full
+		end
+
 		local a=self.angle+rnd()*0.02-0.01
 		local fire_spd_x=cos(a)*self.fire_spd+self.spd_x*1.4
 		local fire_spd_y=sin(a)*self.fire_spd+self.spd_y*1.4
@@ -707,45 +714,39 @@ function enemies:_draw()
 		end
 
 		if e.size==4 then
-			-- pal({[11]=cc}) spr(0+e.type*2,e.x-5,e.y-4,2,2) pal() -- spr() Not work on Picotron
-			-- circ(e.x,e.y,3,cc-3) circ(e.x,e.y,5,cc-3)
-			draw_shape(s_ufo,e.x,e.y,cc)
+			-- circ(e.x,e.y,8,27) -- 크기 확인용
+			do
+				draw_shape(s_ufo,e.x,e.y,cc)
+				local d=(f/12%6)*1.8
+				line(e.x-5+d,e.y-1,e.x-7+d*1.4,e.y+1,cc)
+				d=((f/12+3)%6)*1.8
+				line(e.x-5+d,e.y-1,e.x-7+d*1.4,e.y+1,cc)
+			end
 
-			pset(e.x-4+(round(e.count/9)%5)*2,e.y,cc)
-			-- if(e.type==1 and f%240==0) e.spd_y*=-1 -- UFO 타입1은 지그재그 운행
 			if(e.type==1) e.spd_y=e.spd_x*sin(e.x%200/200) -- UFO 타입1은 지그재그 운행
 			e.count+=1
-			-- if e.count>=100 and not _ship.is_killed then
-			-- if e.count>=20 and not _ship.is_killed then
 			-- ufo가 새로 나올 때마다 총알 인터벌이 점점 짧아짐
 			if e.count>=max(30,100-gg.ufo_born*5) and not _ship.is_killed then
 				-- sfx(24,1)
 				e.count=0
 				-- sfx(23,-1)
 				local angle=atan2(_ship.x-e.x+rnd(10)-5,_ship.y-e.y+rnd(10)-5)
-				local sx=cos(angle+rnd()*0.03)
-				local sy=sin(angle+rnd()*0.03)
+				local sx=cos(angle+rnd()*0.04)
+				local sy=sin(angle+rnd()*0.04)
 				add(_space.particles,
 				{
 					type="bullet_ufo",
 					x=e.x+sx*9,
 					y=e.y+sy*9,
-					-- sx=sx*0.6*min(3,1+gg.ufo_born/5),
-					-- sy=sy*0.6*min(3,1+gg.ufo_born/5),
 					sx=sx*min(2,gg.spd_multiplier),
 					sy=sy*min(2,gg.spd_multiplier),
 					age_max=300,
 					age=1
 				})
 			end
-
-			-- UFO는 화면 밖으로 나가면 사라짐
-			-- if(e.x>130) del(self.list,e)
-			-- if(e.x>sw+4 or e.x<-4) del(self.list,e)
-
 		else
 			-- 크기 테스트
-			-- local r=(e.size==4) and 7 or (e.size==1) and 9+2 or (e.size==2) and 7+1 or 5
+			-- local r=(e.size==4) and 7 or (e.size==1) and 11 or (e.size==2) and 8 or 5
 			-- circ(e.x,e.y,r,27)
 			
 			draw_shape(e.shape,e.x,e.y,cc,e.angle)
@@ -1150,9 +1151,9 @@ gg_reset=function()
 	}
 	if dev then
 		gg.score1=0
-		gg.score2=0
-		gg.ufo_born=0
-		gg.spd_multiplier=1
+		gg.score2=90
+		gg.ufo_born=5
+		gg.spd_multiplier=5
 		gg.ships=0
 		-- gg.is_title=false
 		-- gg.is_gameover=true
@@ -1201,7 +1202,6 @@ end
 clsp={0x7f7f,0xbfbf,0xdfdf,0xefef,0xf7f7,0xfbfb,0xfdfd,0xfefe} -- 4x2에 점 하나씩 스캔라인 순환
 cls1={11,10,9,8,7,6,5,4,3,2,1,0} -- 이전 프레임의 색상을 점점 어둡게(커스텀 팔레트)
 cls2={27,26,25,24,23,22,21,20,19,18,17,16}
-old_t=t()
 
 function _draw()
 	-- cls(0)
@@ -1255,10 +1255,9 @@ function _draw()
 	end
 
 	if dev then
-		print("FPS : "..flr(1/(t()-old_t)+0.5),3,50,cc)
-		old_t=t()
 		print("UFO BORN : "..gg.ufo_born,3,60,cc)
 		print("SPEED : "..gg.spd_multiplier,3,70,cc)
+		print("BULLET : ".._ship.bullet_remain,3,80,cc)
 	end
 
 	-- scanlines
@@ -1266,14 +1265,10 @@ function _draw()
 end
 
 -- <CLEAR LIST>
--- CRT 느낌 잔상 효과 + 팔레트 교체
--- 화면 흔들림 연출 개선(CRT 주사선 느낌 + 스캔라인 이펙트)
--- 소행성 분리되는 조각이 서로 반대 방향으로 날아가게
--- 소행성 소중대 크기 차이 더 많이
-
--- <TODO LIST>
 -- 총알 5점사
 -- 우주선, UFO 디자인 원작 스타일로
+
+-- <TODO LIST>
 -- 폰트 바꾸기
 -- UI 그림자
 -- https://youtu.be/i-Gs01omJyI

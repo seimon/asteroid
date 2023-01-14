@@ -1,7 +1,7 @@
-dev=false
-ver="0.7" -- 2023/01/12
-sw=480
-sh=270
+dev=true
+ver="0.81" -- 2023/01/14
+sw,sh=480,270
+log_txt={}
 
 -- <Asteroids Font(7x9, 5x7 Pixel)> --------------------
 fnt_data_79=[[
@@ -23,7 +23,7 @@ fnt_data_79=[[
 00000070000007000000770000070000007700000700000070007000000700000070000000000000700000070007000000700000770000077000000700000700
 00000070000007000000770000070000007700000700000070007000000700000007000000000007000000000000700000700000770000707000000700007000
 77777770000007777777777777770000007777777700000070000000007000000000700000000070000000070000077777700000777777007777777777770000
-77777777777777777777770000070777770000000770000077000000700000770000077777777777777777777777777777777777777777777000007700000700
+77777777777777777777770000077777777000000770000077000000700000770000077777777777777777777777777777777777777777777000007700000700
 70000007000000700000770000070007000000000770000707000000770007777000077000007700000770000077000007700000000070007000007700000700
 70000007000000700000770000070007000000000770007007000000707070770700077000007700000770000077000007700000000070007000007070007000
 70000007000000700000070000070007000000000770070007000000700700770700077000007700000770000077000007700000000070007000007070007000
@@ -31,7 +31,7 @@ fnt_data_79=[[
 70000007000000700777770000070007000700000770070007000000700000770007077000007700000070070707007000000000700070007000007007070000
 70000007000000700000770000070007000070000770007007000000700000770007077000007700000070007007000700000000700070007000007007070000
 70000007000000700000770000070007000007000770000707000000700000770000777000007700000070070707000070000000700070007000007000700000
-77777777000000777777770000070777770000777770000077777777700000770000077777777700000077700077000007777777700070007777777000700000
+77777777000000777777770000077777777000777770000077777777700000770000077777777700000077700077000007777777700070007777777000700000
 70000077000007700000777777770077700000000000777000007000000000000700000007770000700007770000000000007770000000000000000000000000
 70000070700070070007000000700070000700000000007000070700000000000070000007000000700000070000000000070007000000000000000000000000
 70000070700070007070000007000070000070000000007000700070000000000007000007000000700000070000700000700000700000000000000000000000
@@ -50,13 +50,13 @@ fnt_data_57=[[
 00700000007777700007070007070700000070000007007070007000000000000000000700070007007007000000007000070000770007000077000700007000
 00000000000707077777700077007000000007000070070007007000070000000000007000070007007007000000007000070000770007000077000700007000
 00700000000000000700000007770700000000700700000000000000700000000007000000077777007007777777777000077777777777000077777777777000
-00000000000000700000700007777707770007007777077777777007777777777777777000707770000077000770000700077000777777777777777777777000
+00000000000000700000700007777707770007007777077777777007777777777777777000777777000077000770000700077000777777777777777777777000
 00700007000007000000070007000770007070707000770000700707000070000700007000700700000077007070000770777000770007700077000770007000
 00700007000070077777007000007070777700077007070000700077000070000700007000700700000077070070000707077700770007700077000770007000
 00000000000700000000000700070070707700077770070000700077770077700707777777700700000077700070000700077070770007777777000777777000
 00700007000070077777007000070070777777777007070000700077000070000700077000700700700077070070000700077007770007700007070770700000
 00700007000007000000070000000070007700077000770000700707000070000700077000700700070077007070000700077000770007700007007070070000
-00000070000000700000700000070007770700077777077777777007777770000777777000707770007777000777777700077000777777700007770770007000
+00000070000000700000700000070007770700077777077777777007777770000777777000777777007777000777777700077000777777700007770770007000
 77777777777000770007700077000770007777770777000000077700070000000007000077000700077000000007770000000000000000000000000000000000
 70000007007000770007700070707007070000070700070000000700707000000000700070000700007000000070007000000000000000000000000000000000
 70000007007000707070700070707000700000700700007000000707000700000000000070000700007000700007770000000000000000000000000000000000
@@ -104,7 +104,7 @@ end
 
 
 
--- <class helper> --------------------
+-- <class helper> ----------------------------------------
 function class(base)
 	local nc={}
 	if (base) setmetatable(nc,{__index=base}) 
@@ -197,8 +197,11 @@ function sprite:emit_update()
 	end
 end
 
--- <utilities> --------------------
-function round(n) return flr(n+.5) end
+-- <utilities> ----------------------------------------
+-- function round(n) return flr(n+.5) end
+function round(n)
+	return split(tostr(flr(n+.5)),".")[1]
+end
 function swap(v) if v==0 then return 1 else return 0 end end -- 1 0 swap
 function clamp(a,min_v,max_v) return min(max(a,min_v),max_v) end
 function rndf(lo,hi) return lo+rnd()*(hi-lo) end -- random real number between lo and hi
@@ -255,19 +258,40 @@ end
 
 
 
--- <shape data> --------------------
-function str_to_arr(str,scale)
+-- <shape data> ----------------------------------------
+function str_to_arr(str,scale,pivot)
 	local arr=split(str,",")
-	if scale then
-		for i=1,#arr do
-			if(arr[i]!="x") arr[i]=arr[i]*scale
+	local dx,dy,s=0,0,scale or 1
+	local x1,x2,y1,y2
+
+	-- pivot은 {x=0.5,y=0} 형식으로 설정
+	if pivot then 
+		x1,x2,y1,y2=arr[1],arr[1],arr[2],arr[2]
+		for i=1,#arr,2 do
+			if arr[i]!="x" then
+				-- split() 버그 때문에 인자에 +1 해줌
+				x1,x2=min(x1+1,arr[i]+1)-1,max(x2+1,arr[i]+1)-1
+				y1,y2=min(y1+1,arr[i+1]+1)-1,max(y2+1,arr[i+1]+1)-1
+			end
+		end
+		dx=-x1-(x2-x1)*pivot.x
+		dy=-y1-(y2-y1)*pivot.y
+	end
+
+	-- scale과 pivot 적용
+	for i=1,#arr,2 do
+		if arr[i]!="x" then
+			arr[i]=(arr[i]+dx)*s
+			arr[i+1]=(arr[i+1]+dy)*s
 		end
 	end
+
 	return arr
 end
 s_ufo=str_to_arr("-1,-3,1,-3,2,-1,5,1,2,3,-2,3,-5,1,-2,-1,-1,-3,x,x,-2,-1,2,-1,x,x,-5,1,5,1",2)
-s_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
 s_ship2=str_to_arr("0,-4,4,4,0,2,-4,4,0,-4") -- remain ships
+s_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
+s_thrust=str_to_arr("-1,-2,-10,0,-1,2")
 s_shield=str_to_arr("0,-3,-2,-2,-3,0,-2,2,0,3,2,2,3,0,2,-2,0,-3",3)
 s_ast10=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",3)
 s_ast11=str_to_arr("0,-4,-4,-2,-3,0,-3,3,0,4,1,2,3,2,4,-2,0,-4",3)
@@ -275,36 +299,27 @@ s_ast20=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.8)
 s_ast21=str_to_arr("0,-4,-2,-2,-4,-2,-3,1,-3,3,1,4,2,1,4,-1,0,-4",1.9)
 s_ast30=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",1)
 s_ast31=str_to_arr("-4,0,-2,-4,2,-4,4,-2,4,2,0,4,-4,0",0.95)
-s_title_str="0,6,3,0,6,6,10,6,10,4,6,2,6,0,10,0,14,0,x,x,12,0,12,6,x,x,1,4,5,4" -- AST
-s_title_str=s_title_str..",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3" -- E
-s_title_str=s_title_str..",x,x,20,6,20,0,24,0,24,3,21,3,24,6,x,x,25,6,28,6,29,4,29,0,26,0,25,2,25,6" -- RO
-s_title_str=s_title_str..",x,x,30,0,32,0,x,x,31,0,31,6,x,x,30,6,32,6" -- I
-s_title_str=s_title_str..",x,x,33,6,36,6,37,4,37,2,36,0,33,0,33,6,x,x,38,5,38,6,42,6,42,4,38,2,38,0,42,0,42,1" -- DS
-s_title=str_to_arr(s_title_str,4)
-s_demake=str_to_arr("0,0,0,6,3,6,4,4,4,2,3,0,0,0,x,x,9,0,5,0,5,6,10,6,10,0,13,6,16,0,16,6,19,0,22,6,22,0,x,x,31,0,27,0,27,6,31,6,x,x,5,3,8,3,x,x,17,4,21,4,x,x,26,0,22,3,26,6,x,x,27,3,30,3",4)
-s_2022=str_to_arr("0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,0,19,0,19,2,15,4,15,6,19,6",4)
-s_2023=str_to_arr("0,1,0,0,4,0,4,2,0,4,0,6,4,6,x,x,6,0,5,2,5,6,8,6,9,4,9,0,6,0,x,x,6,5,8,1,x,x,10,1,10,0,14,0,14,2,10,4,10,6,14,6,x,x,15,1,15,0,19,0,19,2,17,3,19,4,19,6,15,6,15,5",4)
-s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",4)
-s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",4)
+s_title_str="0,6,0,2,2,0,4,2,4,6,x,x,0,4,4,4,x,x,9,0,5,0,5,3,9,3,9,6,5,6,x,x,10,0,14,0,x,x,12,0,12,6" -- AST
+-- s_title_str="2,0,5,6,2,4,-1,6,2,0,x,x,9,0,5,0,5,3,9,3,9,6,5,6,x,x,10,0,14,0,x,x,12,0,12,6" -- AST(A=Starship)
+s_title_str..=",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3,x,x,20,6,20,0,24,0,24,3,20,3,x,x,21,3,24,6" -- ER
+s_title_str..=",x,x,25,0,29,0,29,6,25,6,25,0,x,x,30,0,34,0,x,x,32,0,32,6,x,x,30,6,34,6" -- OI
+s_title_str..=",x,x,35,0,37,0,39,2,39,4,37,6,35,6,35,0,x,x,44,0,40,0,40,3,44,3,44,6,40,6" -- DS
+s_title=str_to_arr(s_title_str,4.5,{x=0.5,y=0.5})
+s_demake=str_to_arr("0,0,2,0,4,2,4,4,2,6,0,6,0,0,x,x,9,0,5,0,5,6,9,6,x,x,5,3,8,3,x,x,10,6,10,0,12,2,14,0,14,6,x,x,15,6,15,2,17,0,19,2,19,6,x,x,15,4,19,4,x,x,20,0,20,6,x,x,24,0,20,3,24,6,x,x,29,0,25,0,25,6,29,6,x,x,25,3,28,3",4.5,{x=0.5,y=0.5})
+s_2023=str_to_arr("0,0,4,0,4,3,0,3,0,6,4,6,x,x,5,0,9,0,9,6,5,6,5,0,x,x,10,0,14,0,14,3,10,3,10,6,14,6,x,x,15,0,19,0,19,6,15,6,x,x,15,3,19,3",4.5,{x=0.5,y=0.5})
+-- s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",4)
+-- s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",4)
+s_game=str_to_arr("4,0,0,0,0,6,4,6,4,4,2,4,x,x,5,6,5,2,7,0,9,2,9,6,x,x,5,4,9,4,x,x,10,6,10,0,12,2,14,0,14,6,x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3",4)
+s_over=str_to_arr("0,0,4,0,4,6,0,6,0,0,x,x,5,0,7,6,9,0,x,x,14,0,10,0,10,6,14,6,x,x,10,3,13,3,x,x,15,6,15,0,19,0,19,3,15,3,x,x,16,3,19,6",4)
 s_circle={}
-for i=0,36 do
+for i=0,24 do
 	local r=i/24
-	local x,y=cos(r)*80,sin(r)*80
+	local x,y=sin(r)*80,cos(r)*80
 	add(s_circle,x)
 	add(s_circle,y)
 end
 s_num={}
 s_num["_"]=str_to_arr("0,4,2,4",3)
--- s_num["0"]=str_to_arr("0,0,2,0,2,4,0,4,0,0,x,x,1,1.5,1,2.5",3) --0
--- s_num["1"]=str_to_arr("0,1,1,0,1,4,x,x,0,4,2,4",3) -- 1
--- s_num["2"]=str_to_arr("0,1,0,0,2,0,2,1,0,3,0,4,2,4",3) -- 2
--- s_num["3"]=str_to_arr("0,0,2,0,1,2,x,x,0,2,2,2,2,4,0,4",3)
--- s_num["4"]=str_to_arr("1,0,0,3,2,3,x,x,2,0,2,4",3)
--- s_num["5"]=str_to_arr("2,0,0,0,0,1,2,2,2,4,0,4,0,3",3)
--- s_num["6"]=str_to_arr("2,1,2,0,0,0,0,4,2,4,2,2,0,2",3)
--- s_num["7"]=str_to_arr("0,1,0,0,2,0,1,4",3)
--- s_num["8"]=str_to_arr("0,0,2,0,2,4,0,4,0,0,x,x,0,2,2,2",3)
--- s_num["9"]=str_to_arr("2,2,0,2,0,0,2,0,2,4,0,4,0,3",3)
 s_num["0"]=str_to_arr("0,0,2,0,2,4,0,4,0,0",3) --0
 s_num["1"]=str_to_arr("1,0,1,4",3) -- 1
 s_num["2"]=str_to_arr("0,0,2,0,2,2,0,2,0,4,2,4",3) -- 2
@@ -315,14 +330,13 @@ s_num["6"]=str_to_arr("2,0,0,0,0,4,2,4,2,2,0,2",3)
 s_num["7"]=str_to_arr("0,0,2,0,2,4",3)
 s_num["8"]=str_to_arr("0,0,2,0,2,4,0,4,0,0,x,x,0,2,2,2",3)
 s_num["9"]=str_to_arr("2,2,0,2,0,0,2,0,2,4,0,4",3)
-s_shield_o=str_to_arr("0,0,6,0,6,5,3,7,0,5,0,0,x,x,3,0,3,7",1)
-s_shield_x=str_to_arr("0,0,6,0,6,5,3,7,0,5,0,0,x,x,3,0,3,7,x,x,-2,6,8,-1",1)
--- s_shield_x=str_to_arr("0,4,0,0,6,0,x,x,6,2,6,5,3,7,1,6,x,x,3,0,3,2,x,x,3,4,3,7,x,x,-1,6,7,0",1)
+s_text_break=str_to_arr("0,0,4,4,8,0,12,4,16,0,20,4,24,0,28,4,32,0,36,4",2) -- /\/\/\ shape
 
 
 
 
--- <space> --------------------
+
+-- <space> ----------------------------------------
 space=class(sprite)
 function space:init()
 	self.spd_x=0.3
@@ -366,7 +380,7 @@ function space:_draw()
 			v.y+=v.sy+rnd(4)-2
 			v.sx*=0.93
 			v.sy*=0.93
-			if(v.age>10) del(self.particles,v)
+			if(v.age>20) del(self.particles,v)
 
 	elseif v.type=="bullet" or v.type=="bullet_ufo" then
 			v.x+=v.sx
@@ -461,8 +475,7 @@ function space:_draw()
 
 		elseif v.type=="bonus" then
 			local x=min(3,-16-sin((120-v.age)/240)*20)
-			-- ?"BONUS!",x,14,cc
-			print79("bonus!",x,15,cc,0)
+			print79("bonus!",x,16,cc,0)
 
 			if(v.age>120) del(self.particles,v)
 
@@ -483,7 +496,7 @@ end
 
 
 
--- <ship> --------------------
+-- <ship> ----------------------------------------
 ship=class(sprite)
 function ship:init()
 	self.x=sw/2
@@ -500,6 +513,7 @@ function ship:init()
 	self.thrust_power=0.0009
 	self.thrust_max=1.0
 	self.tail={x=0,y=0}
+	self.tail2={x=0,y=0}
 	self.head={x=0,y=0}
 	self.fire_spd=2.0+0.5
 	self.bullet_remain=5
@@ -528,13 +542,16 @@ function ship:_draw()
 	if(not self.__show) return
 
 	local x,y=self.x,self.y
-	self:draw_ship(x,y)
 	local x0=cos(self.angle)
 	local y0=sin(self.angle)
-	self.tail.x=x-x0*6
-	self.tail.y=y-y0*6	
+	self.tail.x=x-x0*5
+	self.tail.y=y-y0*5
+	self.tail2.x=x-x0*12
+	self.tail2.y=y-y0*12
 	self.head.x=x+x0*8
 	self.head.y=y+y0*8
+	self:draw_ship(x,y)
+	-- pset(self.tail.x,self.tail.y,cc)
 
 	-- 변두리에 있을 때 맞은편에도 그림
 	if x<4 then self:draw_ship(x+sw+2,y) end
@@ -545,6 +562,12 @@ end
 
 function ship:draw_ship(x,y)
 	draw_shape(s_ship,x,y,cc,self.angle)
+	
+	if self.thrust_acc>0.001 and f%3==0 then
+		local s={x=0.1+rnd(0.4)+self.thrust_acc*160,y=1}
+		draw_shape(s_thrust,self.tail.x,self.tail.y,cc,self.angle,false,1,s)
+	end
+
 	if self.use_shield then
 		local r=self.shield_timer/self.shield_timer_max
 		draw_shape(s_shield,x,y,cc,-f%30/30,false,r)
@@ -641,15 +664,15 @@ function ship:on_update()
 	-- add effect
 	if self.thrust_acc>0.001 then
 		-- sfx(4,2)
-		add(_space.particles,
-		{
-			type="thrust",
-			x=self.tail.x-1+rnd(2),
-			y=self.tail.y-1+rnd(2),
-			sx=-thr_x*130,
-			sy=-thr_y*130,
-			age=1
-		})
+		-- add(_space.particles,
+		-- {
+		-- 	type="thrust",
+		-- 	x=self.tail.x-1+rnd(2),
+		-- 	y=self.tail.y-1+rnd(2),
+		-- 	sx=-thr_x*130,
+		-- 	sy=-thr_y*130,
+		-- 	age=1
+		-- })
 	elseif self.thrust_acc<-0.0001 then
 		-- sfx(5,2)
 		add(_space.particles,
@@ -736,6 +759,7 @@ function ship:on_killed()
 		else
 			_enemies:kill_all()
 			gg.is_gameover=true
+			gg.gameover_timer=0
 			gg.scene_timer=0
 			gg.key_wait=30
 			shake()
@@ -772,7 +796,7 @@ end
 
 
 
--- <enemies> --------------------
+-- <enemies> ----------------------------------------
 enemies=class(sprite)
 function enemies:init()
 	self.list={}
@@ -940,31 +964,48 @@ end
 
 
 
--- <title> --------------------
-
+-- <title> ----------------------------------------
 title=class(sprite)
 function title:init()
-	self.tx=sw/2-84
-	self.ty=sh/2-52
 	self:show(true)
 end
 function title:_draw()
-	local x,y=self.tx,self.ty
+	-- local x,y=self.tx,self.ty
 	if gg.is_title then
-		-- draw_guide(sw/2,sh/2)
-		draw_shape(s_title,x,y,cc,0,true)
-		-- draw_shape(s_demake,x+22,y+32,cc,0,true)
-		-- draw_shape(s_2023,x+45,y+64,cc,0,true)
-		draw_shape(s_demake,x-25,y+34,cc,0,true)
-		draw_shape(s_2023,x+116,y+34,cc,0,true)
+		if(gg.title_timer<300) gg.title_timer+=1
+		local x,y=sw/2,sh/2-52
+
+		-- dev_draw_guide(sw/2,sh/2)
+
+		-- draw_shape(s_title,x,y,cc,0,true)
+		-- draw_shape(s_demake,x-25,y+34,cc,0,true)
+		-- draw_shape(s_2023,x+116,y+34,cc,0,true)
+
+		local dy1=sin(t()%3/3)*8
+		local dy2=sin((t()-0.4)%3/3)*8
+		local dy3=sin((t()-0.8)%4/4)*6
+		local dx1=sin((t())%4/4)*5
+		local dx2=sin((t()-0.3)%4/4)*9
+		local dx3=sin((t()-0.6)%4/4)*6
+		local s=1+(1-gg.title_timer/300)^4/2
+		local draw_ratio=2-(1-gg.title_timer/240)*2 -- 0->2 / 240frames
+		draw_shape(s_title,x+dx1,y+dy1,cc,0,false,draw_ratio,{x=s,y=s})
+		draw_shape(s_demake,x-50+dx2,y+36+dy2,cc,0,false,draw_ratio-0.4,{x=s,y=s})
+		draw_shape(s_2023,x+76+dx3,y+36+dy3,cc,0,false,draw_ratio-0.8,{x=s,y=s})
+
+		-- if(f%60<30) print79("press z/x key to play",sw/2,sh/2+32,cc,0.5)
+		local dy4=sin(t()%5/5)*7
+		local dy5=sin((t()-0.3)%5/5)*7
+		local dy6=sin((t()-0.6)%5/5)*7
+		local dx4=sin(t()%6/6)*7
+		local dx5=sin(t()%5/5)*7
+		local dx6=sin(t()%4/4)*7
+		print79("> play <",sw/2+dx4,sh/2+30+dy4,cc,0.5)
+		print79("fever mode",sw/2+dx5,sh/2+52+dy5,cc,0.5)
+		print79("ufo rush",sw/2+dx6,sh/2+74+dy6,cc,0.5)
 		
-		-- ?"Press any key to PLAY",sw/2-52,sh/2+48,f%60<30 and cc or 0
-		-- ?"(C)1979 ATARI INC., Demaked by @mooon",sw/2-90,sh-11,cc
-		-- if(f%60<30) print79("press z/x key to play",sw/2,sh/2+48,cc,0.5,true)
-		if(f%60<30) print79("press z/x key to play",sw/2,sh/2+32,cc,0.5)
-		-- print79("play fever mode!",sw/2,sh/2+44,cc,0.5)
-		-- print79("[z]fire [x]shield [<][>]rotate [^]acceleration",sw/2,sh-28,cc,0.5)
-		print79("(c)1979 atari inc. demaked for picotron",sw/2,sh-14,cc,0.5)
+		-- local dy_bottom=20*min(30,150-(120-gg.title_timer-120))/30
+		print79("(c)1979 atari inc. demaked for picotron",sw/2,sh-11,cc,0.5)
 		print79("ver "..ver,sw-4,4,cc,1)
 
 		if gg.key_wait>0 then
@@ -972,8 +1013,15 @@ function title:_draw()
 		elseif btn(4) or btn(5) then
 			-- sfx(6,3)
 			add_break_eff(x,y,s_title,3.5,80,true)
-			add_break_eff(x+22,y+30,s_demake,3.5,80,true)
-			add_break_eff(x+45,y+60,s_2023,3.5,80,true)
+			add_break_eff(x-25,y+34,s_demake,3.5,80,true)
+			add_break_eff(x+116,y+34,s_2023,3.5,80,true)
+			add_break_eff(sw/2-64,sh/2+32,s_text_break,3.5,80,true)
+			add_break_eff(sw/2,sh/2+32,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-128,sh-11,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-64,sh-11,s_text_break,3.5,80,true)
+			add_break_eff(sw/2,sh-11,s_text_break,3.5,80,true)
+			add_break_eff(sw/2+64,sh-11,s_text_break,3.5,80,true)
+
 			gg.is_title=false
 			-- set_menu()
 			_ship:reset()
@@ -981,17 +1029,34 @@ function title:_draw()
 			_ship.__show=true
 			_enemies:show(true)
 			
+			shake(30,0.3)
+
 			-- 데모 플레이 반복할 때 같은 상황이 연출되게끔 여기서 리셋
 			f=0
 			-- srand(0)
 		end
+
 	elseif gg.is_gameover then
-		-- draw_guide(sw/2,sh/2)
-		draw_shape(s_game,sw/2-91,y,cc,0,true)
-		draw_shape(s_over,sw/2+7,y,cc,0,true)
-		print79("your score",sw/2,y+44,cc,0.5)
-		print_score(8,sw/2,sh/2+2)
-		if(f%60<30) print79("Press any key to continue",sw/2,sh/2+34,cc,0.5)
+		if(gg.gameover_timer<300) gg.gameover_timer+=1
+
+		-- dev_draw_guide(sw/2,sh/2)
+		local x,y=sw/2,sh/2-52
+		local dy1=sin(t()%3/3)*7
+		local dy2=cos(t()%3/3)*7
+		local draw_ratio=2-(1-gg.gameover_timer/300)*2 -- 0->2 / 300frames
+		draw_shape(s_game,sw/2-91,y+dy1,cc,0,false,draw_ratio)
+		draw_shape(s_over,sw/2+7,y+dy2,cc,0,false,draw_ratio-1)
+
+		if gg.gameover_timer>120 then
+			local dy3=sin(t()%4/4)*6
+			print79("your score",sw/2,y+50+dy3,cc,0.5)
+			print_score(sw/2,y+64+dy3,1.6)
+		end
+		if gg.gameover_timer>210 and f%60<30 then
+			local dy4=sin(t()%5/5)*6
+			print79("Press z/x key to continue",sw/2,y+108+dy4,cc,0.5)
+		end
+
 		_ship:show(false)
 		_ship.__show=false
 		_enemies:show(false)
@@ -1000,8 +1065,15 @@ function title:_draw()
 			gg.key_wait-=1
 		elseif btn(4) or btn(5) then
 			-- sfx(3,3)
-			add_break_eff(sw/2-92,y,s_game,3,60,true)
-			add_break_eff(sw/2+8,y,s_over,3,60,true)
+			shake(30,0.3)
+			add_break_eff(sw/2-91,y,s_game,3,60,true)
+			add_break_eff(sw/2+7,y,s_over,3,60,true)
+			add_break_eff(sw/2-32,y+42,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-32,y+50,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-32,y+58,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-84,sh/2+34,s_text_break,3.5,80,true)
+			add_break_eff(sw/2+10,sh/2+34,s_text_break,3.5,80,true)
+
 			gg_reset()
 		end
 	end
@@ -1013,13 +1085,13 @@ end
 
 
 
--- <etc. functions> --------------------
+-- <etc. functions> ----------------------------------------
 
-function draw_guide(x,y)
+function dev_draw_guide(x,y)
 	if(x==nil) x,y=sw/2,sh/2
 	for i=1,10 do
 		local dx=i*20
-		local dy=i*15
+		local dy=i*16
 		rect(x-dx,y-dy,x+dx,y+dy,5)
 	end
 end
@@ -1075,7 +1147,8 @@ function coord_loop(a)
 	a.x=x a.y=y
 end
 
-function rotate(x,y,r)
+function rotate(x,y,r,scale)
+	if(scale) x,y=x*scale.x,y*scale.y
 	if(not r or r==0) return {x=x,y=y}
 	local cosv=cos(r)
 	local sinv=sin(r)
@@ -1085,15 +1158,33 @@ function rotate(x,y,r)
 	return p
 end
 
-function draw_shape(arr,x,y,c,angle,with_wave,draw_ratio)
-	local p1=rotate(arr[1],arr[2],angle)
+function draw_shape(arr,x,y,c,angle,with_wave,draw_ratio,scale)
+	local p1=rotate(arr[1],arr[2],angle,scale)
 	local i2=#arr-1
-	if draw_ratio then i2=3+flr(#arr-3)*clamp(draw_ratio,0,1) end
+	if draw_ratio then
+		-- i2=3+flr(#arr-3)*clamp(draw_ratio,0,1)
+		if(draw_ratio<=0) return nil
+		draw_ratio=clamp(draw_ratio,0,1)
+		local lines=#arr/2-1
+		local draw_lines=flr(lines*draw_ratio)+1
+		i2=min(2+draw_lines*2,#arr-1)
+	else draw_ratio=1 end
 	for i=3,i2,2 do
 		if arr[i]=="x" then
 			p1={x="x",y="x"}
 		else
-			local p2=rotate(arr[i],arr[i+1],angle)
+			local p2=rotate(arr[i],arr[i+1],angle,scale)
+
+			-- draw_ratio에 맞춰서 선 하나 길이까지 정밀하게 그리기
+			if draw_ratio<1 and i>=i2-1 and p1.x!="x" and p2.x!="x" then
+				local lines=#arr/2-1
+				local ratio_per_line=1/lines
+				local current_ratio=(draw_ratio%ratio_per_line)/ratio_per_line
+				local px=p1.x+(p2.x-p1.x)*current_ratio
+				local py=p1.y+(p2.y-p1.y)*current_ratio
+				p2={x=px,y=py}
+			end
+
 			if p1.x!="x" then
 				if with_wave then
 					local dy1=sin((p1.x+p1.y-t()*60)%80/80)*3
@@ -1106,6 +1197,10 @@ function draw_shape(arr,x,y,c,angle,with_wave,draw_ratio)
 			p1=p2
 		end
 	end
+	if draw_ratio<1 and p1.x!="x" then
+		circfill(p1.x+x,p1.y+y,1,cc)
+	end
+	-- if(dev) circ(x,y,2,14) -- pivot center circle
 end
 
 function get_dist(x1,y1,x2,y2)
@@ -1150,7 +1245,7 @@ function add_explosion_eff(x,y,spd_x,spd_y,power,count)
 end
 function add_hit_eff(x,y,angle)
 	for i=1,8 do
-		local a=angle+round(i/8)*0.6-0.3
+		local a=angle+flr(i/8+0.5)*0.6-0.3
 		local sx=cos(a)
 		local sy=sin(a)
 		add(_space.particles,
@@ -1207,22 +1302,25 @@ function shake_diff()
 	return stage.__on_shake and (rnd(12)-6)*shake_t/100 or 0 -- +-6 -> 0
 end
 
-function print_score(len,x,y,shadow)
+function print_score(x,y,scale,max_len)
 	local t0,t1="",get_score_str()
-	local lx=x-len/2*9-8
+	local len=max_len or #t1
+	local s=scale or 1
+	local nw,gap=6*s,3*s
+	local lx=x-(len*(nw+gap)-gap)/2
 	for i=1,len-#t1 do t1="_"..t1 end
-	if not _ship.is_killed and _ship.y<20 and _ship.x<sw/2+50 and _ship.x>sw/2-50 then
-		for i=0,7 do poke(0x5500+i,i%2==0 and 85 or 170) end -- fill pattern
-	end
+
+	-- 전투기가 점수 밑에 들어가면 망점 처리
+	-- if not _ship.is_killed and _ship.y<20 and _ship.x<sw/2+50 and _ship.x>sw/2-50 then
+	-- 	for i=0,7 do poke(0x5500+i,i%2==0 and 85 or 170) end -- fill pattern
+	-- end
 	for i=1,#t1 do
 		local n=sub(t1,i,i)
-		local x2=lx+i*9+shake_diff()
+		local x2=lx+(i-1)*(nw+gap)+shake_diff()
 		local y2=y+shake_diff()
-		if(shadow) draw_shape(s_num[n],x2+1,y2+1,32)
-		draw_shape(s_num[n],x2,y2,cc)
+		draw_shape(s_num[n],x2,y2,cc,0,false,1,{x=s,y=s})
 	end
-	fillp()
-
+	-- fillp()
 end
 function get_score_str()
 	-- 소숫점 덧셈 버그 때문에 정수 2개 사용(0.1+0.1=0.199같은 버그)
@@ -1275,7 +1373,9 @@ gg_reset=function()
 	gg={
 		key_wait=20,
 		is_title=true,
+		title_timer=0,
 		is_gameover=false,
+		gameover_timer=0,
 		score1=0,
 		score2=0,
 		ships=3,
@@ -1312,13 +1412,14 @@ function _init()
 	stage:add_child(_title)
 
 	-- set up display table
-	for i0=0,10 do
+	for i0=0,9 do
 		local i=i0
 		-- poke4(0x5000+i0*4,(mid(0,i*10,255)<<8)+(mid(0,i*1,255)<<0)) -- 녹색 계열
     poke4(0x5000+i0*4,(mid(0,i*7,255)<<16)+(mid(0,i*9,255)<<8)+(mid(0,i*9,255)<<0)) -- 흰색에 가깝게
   end
-	-- poke4(0x5000+11*4,0x00ff40)
-  poke4(0x5000+11*4,0xccffee)
+	poke4(0x5000+9*4,0x688878)
+	poke4(0x5000+10*4,0x98d0c0)
+	poke4(0x5000+11*4,0xccffee)
 	for i0=16,26 do
 		local i=i0-16
 		poke4(0x5000+i0*4,(mid(0,i*6,255)<<8)+(mid(0,i*9,255)<<0))
@@ -1337,6 +1438,8 @@ end
 clsp={0x7f7f,0xbfbf,0xdfdf,0xefef,0xf7f7,0xfbfb,0xfdfd,0xfefe} -- 4x2에 점 하나씩 스캔라인 순환
 cls1={11,10,9,8,7,6,5,4,3,2,1,0} -- 이전 프레임의 색상을 점점 어둡게(커스텀 팔레트)
 cls2={27,26,25,24,23,22,21,20,19,18,17,16}
+hud_top=4
+hud_top_default=4
 
 function _draw()
 	-- cls(0)
@@ -1350,29 +1453,40 @@ function _draw()
 
 	-- ui
 	if not (gg.is_title or gg.is_gameover) then
-		print_score(8,sw/2,3,true)
 
-		-- pal({[11]=cc}) palt(3,true) palt(0,false)
-		-- for i=0,gg.ships-1 do spr(13,1+i*6,1) end
-		-- spr(_ship.shield_enable and 11 or f%30<15 and 11 or 12,122,1)
-		-- palt()
+		-- hud_top 좌표가 ship에 밀려 올라감
+		-- local ty=hud_top_default
+		-- if (not _ship.is_killed and _ship.y<32) ty=_ship.y-28
+		-- hud_top=hud_top+(ty-hud_top)*0.3
+
+		print_score(sw/2,hud_top)
 
 		-- remain ships
 		for i=0,gg.ships-1 do
-			draw_shape(s_ship2,7+i*10+shake_diff(),7+shake_diff(),cc)
+			draw_shape(s_ship2,7+i*10+shake_diff(),hud_top+4+shake_diff(),cc)
 		end
 
-		-- shield icon
+		-- shield text
+		local r=_ship.shield_timer/_ship.shield_timer_max
+		local t=round(r*100)
+		for i=#t,2 do t=" "..t end
+		t="shield "..t.."%"
+		local w=_ship.shield_timer/_ship.shield_timer_max*74
+		if(not _ship.shield_enable and f%30<15) t="" w=0
+		print79(t,sw-4,hud_top,cc,1) -- shield text
+		if w>1 then line(sw-5-w,hud_top+10,sw-5,hud_top+10,cc) end -- shield line
+
+		--[[ -- shield icon
 		if _ship.shield_enable then draw_shape(s_shield_o,sw-10,3,cc)
 		elseif f%30<15 then draw_shape(s_shield_x,sw-10,3,cc) end
 
-		-- shield
+		-- shield line
 		local w=_ship.shield_timer/_ship.shield_timer_max*50
 		if w>1 then
 			if(not _ship.shield_enable and f%30<15) for i=0,7 do poke(0x5500+i,i%2==0 and 85 or 170) end
 			line(sw-14-w,6,sw-14,6,cc)
 			fillp()
-		end
+		end ]]
 	end
 
 	-- shake effect
@@ -1397,19 +1511,33 @@ function _draw()
 
 	-- scanlines
 	-- for i=0,68 do poke(0x5400+i,0x11) end
+
+	-- log
+	if dev and log_txt then
+		for i=1,#log_txt do
+			print(log_txt[i],4,4+(i-1)*10,14)
+		end
+	end
+
+end
+
+function log(s)
+	add(log_txt,s)
 end
 
 
 
-
--- <CLEAR LIST>
--- 폰트 바꾸기
-
--- <TODO LIST>
--- UI 그림자(HUD에만)
--- 게임 모드 추가
+-- <CLEAR>
 -- 자잘한 글자들에도 파괴 연출
--- 시작할 때 HUD 등장 연출
+-- UI 다듬기(스코어는 유효 숫자만, 실드를 글자+밑줄로 표기)
+
+-- <TODO>
+-- 게임 모드 추가
+-- 시작할 때 HUD 등장 연출?
 -- 배경 별 색상 2종류로 테스트
 -- 로고, 게임오버 글자 더 크게
+-- 보너스 알림 잘못 나오는 경우 제거
+-- 보호막 리필 중에 X키 누르면 피즐 이펙트
+
+-- <Ref.>
 -- https://youtu.be/i-Gs01omJyI

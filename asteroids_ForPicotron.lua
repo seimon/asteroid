@@ -1,5 +1,5 @@
-dev=true
-ver="0.81" -- 2023/01/14
+dev=false
+ver="0.85" -- 2023/01/15
 sw,sh=480,270
 log_txt={}
 
@@ -79,16 +79,20 @@ function convert_ord_to_id(t) -- 글자에서 ord 값을 뽑아 스프라이트 
 	return a
 end
 
-function print79(t,x,y,c,align,big_size)
+function print79(t,x,y,c,align,big_size,draw_ratio,with_box)
 	local id
 	local gap=2
 	local data,w,h,n=fnt57,5,7,25 -- 데이터(spr),글자하나의 가로,세로,이미지 한 줄에 있는 글자 수
 	if(big_size) data,w,h,n=fnt79,7,9,18
+	if(draw_ratio) t=sub(t,1,flr(#t*clamp(draw_ratio,0,1)))..((draw_ratio>0 and draw_ratio<1) and "_" or "")
 	
 	-- 글자 정렬
 	local align=align and align or 0 -- 정렬 0 왼쪽부터, 0.5 중앙, 1 오른쪽부터
 	local full_w=#t*w+(#t-1)*gap
 	if align==0.5 then x=x-full_w/2 elseif align==1 then x=x-full_w end
+
+	-- 테두리 박스
+	if(with_box and #t>0) draw_shape(s_box,x-6,y+3,cc,0,false,1,{x=(full_w+10)/10,y=1.6})
 
 	pal(7,c)
 	for i=1,#t do
@@ -205,7 +209,7 @@ end
 function swap(v) if v==0 then return 1 else return 0 end end -- 1 0 swap
 function clamp(a,min_v,max_v) return min(max(a,min_v),max_v) end
 function rndf(lo,hi) return lo+rnd()*(hi-lo) end -- random real number between lo and hi
-function rndi(n) return flr(rnd(n)) end -- random int
+function rndi(n) return flr(rnd(n)) end -- random int(0<=value<n)
 function printa(t,x,y,c,align,shadow) -- 0.5 center, 1 right align
 	x-=align*4*#(tostr(t))
 	if (shadow) ?t,x+1,y+1,0
@@ -269,9 +273,11 @@ function str_to_arr(str,scale,pivot)
 		x1,x2,y1,y2=arr[1],arr[1],arr[2],arr[2]
 		for i=1,#arr,2 do
 			if arr[i]!="x" then
-				-- split() 버그 때문에 인자에 +1 해줌
-				x1,x2=min(x1+1,arr[i]+1)-1,max(x2+1,arr[i]+1)-1
-				y1,y2=min(y1+1,arr[i+1]+1)-1,max(y2+1,arr[i+1]+1)-1
+				-- split() 버그 때문에 인자에 +0 해줌
+				-- x1,x2=min(x1+1,arr[i]+1)-1,max(x2+1,arr[i]+1)-1
+				-- y1,y2=min(y1+1,arr[i+1]+1)-1,max(y2+1,arr[i+1]+1)-1
+				x1,x2=min(x1+0,arr[i]+0),max(x2+0,arr[i]+0)
+				y1,y2=min(y1+0,arr[i+1]+0),max(y2+0,arr[i+1]+0)
 			end
 		end
 		dx=-x1-(x2-x1)*pivot.x
@@ -311,6 +317,7 @@ s_2023=str_to_arr("0,0,4,0,4,3,0,3,0,6,4,6,x,x,5,0,9,0,9,6,5,6,5,0,x,x,10,0,14,0
 -- s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",4)
 s_game=str_to_arr("4,0,0,0,0,6,4,6,4,4,2,4,x,x,5,6,5,2,7,0,9,2,9,6,x,x,5,4,9,4,x,x,10,6,10,0,12,2,14,0,14,6,x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3",4)
 s_over=str_to_arr("0,0,4,0,4,6,0,6,0,0,x,x,5,0,7,6,9,0,x,x,14,0,10,0,10,6,14,6,x,x,10,3,13,3,x,x,15,6,15,0,19,0,19,3,15,3,x,x,16,3,19,6",4)
+s_box=str_to_arr("0,-1,2,-1,2,1,0,1,0,-1",5)
 s_circle={}
 for i=0,24 do
 	local r=i/24
@@ -331,6 +338,12 @@ s_num["7"]=str_to_arr("0,0,2,0,2,4",3)
 s_num["8"]=str_to_arr("0,0,2,0,2,4,0,4,0,0,x,x,0,2,2,2",3)
 s_num["9"]=str_to_arr("2,2,0,2,0,0,2,0,2,4,0,4",3)
 s_text_break=str_to_arr("0,0,4,4,8,0,12,4,16,0,20,4,24,0,28,4,32,0,36,4",2) -- /\/\/\ shape
+s_cat_str="1,-2.5,2,-4,3,-2,4,-1,4,2,2,4,-2,4,-4,2,-4,-1,-3,-2,-2,-4,-1,-2.5,1,-2.5"
+s_cat_str..=",x,x,-3,-0.5,-0.5,-0.5,-0.5,0.5,-1.75,1,-3,0.5,-3,-0.5,x,x,-1.75,-0.5,-1.75,0.5" -- eye l
+s_cat_str..=",x,x,0.5,-0.5,3,-0.5,3,0.5,1.75,1,0.5,0.5,0.5,-0.5,x,x,1.75,-0.5,1.75,0.5" -- eye r
+s_cat_str..=",x,x,-2,2,-1.5,2.5,-1,2.5,0,2,1,2.5,1.5,2.5,2,2,x,x,0,2,0,1.5" -- mouth
+s_cat_str..=",x,x,2.5,1.5,5,1.5,x,x,2.5,2.5,5,3,x,x,-2.5,1.5,-5,1.5,x,x,-2.5,2.5,-5,3"
+s_cat=str_to_arr(s_cat_str)
 
 
 
@@ -350,7 +363,8 @@ function space:init()
 			y=rnd(sh),
 			spd=base_spd+i/max*base_spd,
 			size=1+rnd(1),
-			c=rnd()<0.2 and 26 or 23
+			-- c=rnd()<0.2 and 26 or 23
+			c=rnd()<0.2 and cc-5 or cc-7
 		}
 	end
 	for i=1,140 do add(self.stars,make_star(i,200,1)) end
@@ -368,8 +382,10 @@ function space:_draw()
 		local y=v.y+self.spd_y*v.spd
 		v.x=x>sw+1 and x-sw-1 or x<-2 and x+sw+1 or x
 		v.y=y>sh+1 and y-sh-1 or y<-2 and y+sh+1 or y
-		if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.003 and 27 or v.c)
-		else pset(v.x,v.y,rnd()<0.003 and 27 or v.c) end
+		-- if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.003 and 27 or v.c)
+		-- else pset(v.x,v.y,rnd()<0.003 and 27 or v.c) end
+		if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.002 and cc-3 or v.c)
+		else pset(v.x,v.y,rnd()<0.002 and cc-3 or v.c) end
 	end
 
 	-- particles
@@ -474,10 +490,11 @@ function space:_draw()
 			if(v.age>v.age_max) del(self.particles,v)
 
 		elseif v.type=="bonus" then
-			local x=min(3,-16-sin((120-v.age)/240)*20)
-			print79("bonus!",x,16,cc,0)
-
-			if(v.age>120) del(self.particles,v)
+			-- local x=min(3,-16-sin((120-v.age)/240)*20)
+			-- print79("bonus!",x,16,cc,0)
+			local dr=clamp((1-abs(1-v.age/90))*1.5,0,1) -- 0->1->delay->0
+			print79("bonus!!!",3,16,cc,0,false,dr)
+			if(v.age>180) del(self.particles,v)
 
 		elseif v.type=="debug_line" then
 			local c=6+v.x1%6
@@ -515,7 +532,7 @@ function ship:init()
 	self.tail={x=0,y=0}
 	self.tail2={x=0,y=0}
 	self.head={x=0,y=0}
-	self.fire_spd=2.0+0.5
+	self.fire_spd=2.5
 	self.bullet_remain=5
 	self.bullet_remain_max=5
 	self.fire_intv=8
@@ -532,6 +549,20 @@ function ship:init()
 	-- self:on("update",self.on_update) -- stage:emit_update()가 동작 안해서 꺼놨음
 	self.__on_killed=false
 	self.__show=true
+end
+
+function ship:set_mode(n)
+	-- mode1: default
+	-- mode2: super power!
+	if n==2 then
+		self.fire_intv=6
+		self.fire_intv_full=6
+		self.fire_intv_max=6
+	else
+		self.fire_intv=8
+		self.fire_intv_full=8
+		self.fire_intv_max=30
+	end
 end
 
 function ship:_draw()
@@ -564,13 +595,18 @@ function ship:draw_ship(x,y)
 	draw_shape(s_ship,x,y,cc,self.angle)
 	
 	if self.thrust_acc>0.001 and f%3==0 then
-		local s={x=0.1+rnd(0.4)+self.thrust_acc*160,y=1}
+		local s={x=0.3+sin(t()*5)*0.2+self.thrust_acc*160,y=1}
 		draw_shape(s_thrust,self.tail.x,self.tail.y,cc,self.angle,false,1,s)
 	end
 
 	if self.use_shield then
 		local r=self.shield_timer/self.shield_timer_max
-		draw_shape(s_shield,x,y,cc,-f%30/30,false,r)
+		-- draw_shape(s_shield,x,y,cc,-f%30/30,false,r)
+		draw_shape(s_shield,x,y,cc,t()%0.5/0.5,false,r)
+	end
+
+	if self.shield_enable==false and t()%0.25<0.1 then
+		draw_shape_dot(s_shield,x,y,cc,t()%3/3)
 	end
 end
 
@@ -673,17 +709,6 @@ function ship:on_update()
 		-- 	sy=-thr_y*130,
 		-- 	age=1
 		-- })
-	elseif self.thrust_acc<-0.0001 then
-		-- sfx(5,2)
-		add(_space.particles,
-		{
-			type="thrust-back",
-			x=self.head.x-2+rnd(4),
-			y=self.head.y-2+rnd(4),
-			sx=-thr_x*120,
-			sy=-thr_y*120,
-			age=1
-		})
 	else
 		-- sfx(-1,2)
 	end
@@ -761,7 +786,7 @@ function ship:on_killed()
 			gg.is_gameover=true
 			gg.gameover_timer=0
 			gg.scene_timer=0
-			gg.key_wait=30
+			gg.key_wait=240
 			shake()
 		end
 		-- self:remove_handler("update",self.on_killed)
@@ -812,7 +837,11 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 		if(e.size==4) c4+=1
 	end
 
-	local df=min(40,6+gg.score1\2000+gg.score2*5) -- 난이도 2만점마다 증가(큰 소행성이 리필되는 수 6~40)
+	-- 난이도 2만점마다 증가(큰 소행성이 리필되는 수 6~40)
+	local df=min(40,6+gg.score1\2000+gg.score2*5)
+	-- 카이퍼 벨트 모드라면 최소 수량을 더 늘린다
+	if(gg.title_selected_menu==2) df=40
+	
 	if c1<df and #self.list<8+df then
 		local r=rnd()
 		local x=cos(r)*sw*0.7
@@ -840,7 +869,7 @@ function enemies:_draw()
 	for i,e in pairs(self.list) do
 		e.x+=e.spd_x
 		e.y+=e.spd_y
-		e.angle=value_loop(e.angle+e.spd_r,0,1)
+		e.angle=angle_loop(e.angle+e.spd_r,0,1)
 		
 		if e.is_yeanling then
 			if(e.x>5 and e.x<sw-6 and e.y>5 and e.y<sh-6) e.is_yeanling=false
@@ -967,6 +996,8 @@ end
 -- <title> ----------------------------------------
 title=class(sprite)
 function title:init()
+	self.menu_str={"original mode","kuiper belt mode","ufo rush mode"}
+	self.modal_timer=0
 	self:show(true)
 end
 function title:_draw()
@@ -977,10 +1008,6 @@ function title:_draw()
 
 		-- dev_draw_guide(sw/2,sh/2)
 
-		-- draw_shape(s_title,x,y,cc,0,true)
-		-- draw_shape(s_demake,x-25,y+34,cc,0,true)
-		-- draw_shape(s_2023,x+116,y+34,cc,0,true)
-
 		local dy1=sin(t()%3/3)*8
 		local dy2=sin((t()-0.4)%3/3)*8
 		local dy3=sin((t()-0.8)%4/4)*6
@@ -988,74 +1015,120 @@ function title:_draw()
 		local dx2=sin((t()-0.3)%4/4)*9
 		local dx3=sin((t()-0.6)%4/4)*6
 		local s=1+(1-gg.title_timer/300)^4/2
-		local draw_ratio=2-(1-gg.title_timer/240)*2 -- 0->2 / 240frames
-		draw_shape(s_title,x+dx1,y+dy1,cc,0,false,draw_ratio,{x=s,y=s})
-		draw_shape(s_demake,x-50+dx2,y+36+dy2,cc,0,false,draw_ratio-0.4,{x=s,y=s})
-		draw_shape(s_2023,x+76+dx3,y+36+dy3,cc,0,false,draw_ratio-0.8,{x=s,y=s})
+		local dr=get_draw_ratio(gg.title_timer,-0.5,2,240) -- -0.5->2 / 240frames
+		draw_shape(s_title,x+dx1,y+dy1,cc,0,false,dr,{x=s,y=s})
+		draw_shape(s_demake,x-50+dx2,y+36+dy2,cc,0,false,dr-0.4,{x=s,y=s})
+		draw_shape(s_2023,x+76+dx3,y+36+dy3,cc,0,false,dr-0.8,{x=s,y=s})
+		draw_shape(s_cat,sw-50+dx3,sh-18+dy3,cc,0,false,dr-1,{x=9,y=7})
 
-		-- if(f%60<30) print79("press z/x key to play",sw/2,sh/2+32,cc,0.5)
 		local dy4=sin(t()%5/5)*7
 		local dy5=sin((t()-0.3)%5/5)*7
 		local dy6=sin((t()-0.6)%5/5)*7
 		local dx4=sin(t()%6/6)*7
 		local dx5=sin(t()%5/5)*7
 		local dx6=sin(t()%4/4)*7
-		print79("> play <",sw/2+dx4,sh/2+30+dy4,cc,0.5)
-		print79("fever mode",sw/2+dx5,sh/2+52+dy5,cc,0.5)
-		print79("ufo rush",sw/2+dx6,sh/2+74+dy6,cc,0.5)
 		
-		-- local dy_bottom=20*min(30,150-(120-gg.title_timer-120))/30
-		print79("(c)1979 atari inc. demaked for picotron",sw/2,sh-11,cc,0.5)
-		print79("ver "..ver,sw-4,4,cc,1)
+		menu_str={}
+		for i=1,3 do
+			local t1,t2="",""
+			if i==gg.title_selected_menu then
+				t1,t2="> "," <"
+				if(t()%0.3<0.15) t1,t2="- "," -"
+			end
+			menu_str[i]=t1..self.menu_str[i]..t2
+		end		
+		local dr=get_draw_ratio(gg.title_timer,-3,3,240) -- -3->3 / 240frames
+		print79(menu_str[1],sw/2+dx4,sh/2+30+dy4,cc,0.5,false,dr,gg.title_selected_menu==1)
+		print79(menu_str[2],sw/2+dx5,sh/2+50+dy5,cc,0.5,false,dr-1,gg.title_selected_menu==2)
+		print79(menu_str[3],sw/2+dx6,sh/2+70+dy6,cc,0.5,false,dr-2,gg.title_selected_menu==3 and self.modal_timer<=0)
+		
+		local dy7=sin((t())%5/5)*6
+		local dr=get_draw_ratio(gg.title_timer,-2,1,300) -- -2->1 / 300frames
+		print79("(c)1979 atari inc. demaked by @mooon",sw/2-dx1,sh-16+dy7,cc,0.5,false,dr)
+		print79("version "..ver,sw-4,4,cc,1,false,dr)
 
+		if self.modal_timer>0 then
+			local cx,cy=sw/2+dy4,sh/2+dx4
+			local dr=1-get_draw_ratio(self.modal_timer-210,0,1,30)^4
+			rectfill(cx-115-dr*20,cy-15-dr*10,cx+115+dr*20,cy+15+dr*10,32)
+			draw_shape(s_box,cx-115-dr*20,cy,cc,0,false,1,{x=(230+dr*40)/10,y=3+dr*2})
+			dr=get_draw_ratio(240-self.modal_timer,0,1,90)
+			print79("sorry, under develpment...",cx,cy-3,cc,0.5,false,dr)
+			if self.modal_timer==1 then
+				add_break_eff(cx-54,cy,s_demake,3,30,true)
+				add_break_eff(cx+80,cy,s_2023,3,30,true)
+				shake(30,0.3)
+			end
+		end
+		
+		-- 키 입력
 		if gg.key_wait>0 then
 			gg.key_wait-=1
-		elseif btn(4) or btn(5) then
+		elseif self.modal_timer>0 then
+			self.modal_timer-=1
+		elseif btn(2) then gg.title_selected_menu=value_loop(gg.title_selected_menu-1,1,3) gg.key_wait=10
+		elseif btn(3) then gg.title_selected_menu=value_loop(gg.title_selected_menu+1,1,3) gg.key_wait=10
+		-- elseif (btn(4) or btn(5)) and gg.title_timer>=240 and gg.title_selected_menu!=3 then
+		elseif (btn(4) or btn(5)) then
 			-- sfx(6,3)
-			add_break_eff(x,y,s_title,3.5,80,true)
-			add_break_eff(x-25,y+34,s_demake,3.5,80,true)
-			add_break_eff(x+116,y+34,s_2023,3.5,80,true)
-			add_break_eff(sw/2-64,sh/2+32,s_text_break,3.5,80,true)
-			add_break_eff(sw/2,sh/2+32,s_text_break,3.5,80,true)
-			add_break_eff(sw/2-128,sh-11,s_text_break,3.5,80,true)
-			add_break_eff(sw/2-64,sh-11,s_text_break,3.5,80,true)
-			add_break_eff(sw/2,sh-11,s_text_break,3.5,80,true)
-			add_break_eff(sw/2+64,sh-11,s_text_break,3.5,80,true)
+			if gg.title_selected_menu==3 then
+				self.modal_timer=240
+			else
+				add_break_eff(x,y,s_title,3.5,80,true)
+				add_break_eff(x-50,y+36,s_demake,3.5,80,true)
+				add_break_eff(x+76,y+36,s_2023,3.5,80,true)
+				add_break_eff(sw/2-30,sh/2+30,s_text_break,3.5,80,true)
+				add_break_eff(sw/2-30,sh/2+50,s_text_break,3.5,80,true)
+				add_break_eff(sw/2-30,sh/2+70,s_text_break,3.5,80,true)
+				add_break_eff(sw/2-128,sh-11,s_text_break,3.5,80,true)
+				add_break_eff(sw/2-64,sh-11,s_text_break,3.5,80,true)
+				add_break_eff(sw/2,sh-11,s_text_break,3.5,80,true)
+				add_break_eff(sw/2+64,sh-11,s_text_break,3.5,80,true)
 
-			gg.is_title=false
-			-- set_menu()
-			_ship:reset()
-			_ship:show(true)
-			_ship.__show=true
-			_enemies:show(true)
-			
-			shake(30,0.3)
+				gg.is_title=false
+				if gg.title_selected_menu==2 then
+					gg.spd_multiplier=5
+				end
+				-- set_menu()
+				_ship:reset()
+				_ship:set_mode(gg.title_selected_menu==2 and 2 or 1)
+				_ship:show(true)
+				_ship.__show=true
+				_enemies:show(true)
+				
+				shake(30,0.3)
 
-			-- 데모 플레이 반복할 때 같은 상황이 연출되게끔 여기서 리셋
-			f=0
-			-- srand(0)
+				-- 데모 플레이 반복할 때 같은 상황이 연출되게끔 여기서 리셋
+				f=0
+				-- srand(0)
+			end
 		end
 
 	elseif gg.is_gameover then
 		if(gg.gameover_timer<300) gg.gameover_timer+=1
-
 		-- dev_draw_guide(sw/2,sh/2)
+
 		local x,y=sw/2,sh/2-52
 		local dy1=sin(t()%3/3)*7
 		local dy2=cos(t()%3/3)*7
-		local draw_ratio=2-(1-gg.gameover_timer/300)*2 -- 0->2 / 300frames
-		draw_shape(s_game,sw/2-91,y+dy1,cc,0,false,draw_ratio)
-		draw_shape(s_over,sw/2+7,y+dy2,cc,0,false,draw_ratio-1)
+		local dx1=sin((t())%4/4)*5
+		local dx2=sin((t()-0.3)%4/4)*9
+		local dr=get_draw_ratio(gg.gameover_timer,-0.5,2,180) -- -0.5->2 / 180
+		draw_shape(s_game,sw/2-86+dx1,y+dy1,cc,0,false,dr)
+		draw_shape(s_over,sw/2+8+dx2,y+dy2,cc,0,false,dr-1)
 
-		if gg.gameover_timer>120 then
-			local dy3=sin(t()%4/4)*6
-			print79("your score",sw/2,y+50+dy3,cc,0.5)
-			print_score(sw/2,y+64+dy3,1.6)
-		end
-		if gg.gameover_timer>210 and f%60<30 then
-			local dy4=sin(t()%5/5)*6
-			print79("Press z/x key to continue",sw/2,y+108+dy4,cc,0.5)
-		end
+		local dy3=sin(t()%4/4)*6
+		local dx3=sin((t()-0.6)%4/4)*6
+		dr=get_draw_ratio(gg.gameover_timer,-2,2,240) -- -1->1 / 240f
+		-- print79("your score",sw/2+dx3,y+50+dy3,cc,0.5,false,dr)
+		print79(self.menu_str[gg.title_selected_menu].." score",sw/2+dx3,y+50+dy3,cc,0.5,false,dr)
+		print_score(sw/2+dx2+dx3,y+64+dy3*1.3,1.6,8,dr)
+
+		local dy4=sin(t()%5/5)*6
+		local dx4=sin(t()%6/6)*7
+		dr=get_draw_ratio(gg.gameover_timer,-2,1,300) -- -2->1 / 300f
+		local t=(gg.gameover_timer>=300 and t()%1<0.5) and "" or "press z/x key to continue"
+		print79(t,sw/2+dx4,y+120+dy4,cc,0.5,false,dr)
 
 		_ship:show(false)
 		_ship.__show=false
@@ -1066,13 +1139,13 @@ function title:_draw()
 		elseif btn(4) or btn(5) then
 			-- sfx(3,3)
 			shake(30,0.3)
-			add_break_eff(sw/2-91,y,s_game,3,60,true)
-			add_break_eff(sw/2+7,y,s_over,3,60,true)
+			add_break_eff(sw/2-86,y,s_game,3,60,true)
+			add_break_eff(sw/2+8,y,s_over,3,60,true)
 			add_break_eff(sw/2-32,y+42,s_text_break,3.5,80,true)
-			add_break_eff(sw/2-32,y+50,s_text_break,3.5,80,true)
-			add_break_eff(sw/2-32,y+58,s_text_break,3.5,80,true)
-			add_break_eff(sw/2-84,sh/2+34,s_text_break,3.5,80,true)
-			add_break_eff(sw/2+10,sh/2+34,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-32,y+56,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-52,y+68,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-84,sh/2+66,s_text_break,3.5,80,true)
+			add_break_eff(sw/2+10,sh/2+66,s_text_break,3.5,80,true)
 
 			gg_reset()
 		end
@@ -1086,6 +1159,11 @@ end
 
 
 -- <etc. functions> ----------------------------------------
+
+-- v가 0->dur까지 증가하는동안 min->max로 증가하는 ratio를 반환
+function get_draw_ratio(v,min,max,dur)
+	return clamp(max-(1-v/dur)*(max-min),min,max)
+end
 
 function dev_draw_guide(x,y)
 	if(x==nil) x,y=sw/2,sh/2
@@ -1124,17 +1202,22 @@ function score_up(size)
 		gg.score1-=10000
 	end
 
-	-- 5만점마다 보너스
+	-- 5만점마다 보너스(가득차서 못 받는 경우는 그냥 넘어감)
 	if gg.score1\5000+gg.score2*2>gg.bonus_earned then
+		if(gg.ships<gg.ships_max) add(_space.particles,{type="bonus",age=0})
 		gg.ships=min(gg.ships+1,gg.ships_max)
 		gg.bonus_earned+=1
 		-- sfx(25,1)
-		if(gg.ships<=gg.ships_max) add(_space.particles,{type="bonus",age=0})
+		-- if(gg.ships<=gg.ships_max) add(_space.particles,{type="bonus",age=0})
 	end
 
 end
 
-function value_loop(v,min,max)
+function value_loop(v,min,max) -- (4,1,3) -> 1 / (0,1,3) -> 3
+	return v<min and max or v>max and min or v
+end
+
+function angle_loop(v,min,max) -- (1.15,0,1) -> 0.15 / (0.4,0.5,2) -> 1.9
   if v<min then v=(v-min)%(max-min)+min
   elseif v>max then v=v%max+min end
   return v
@@ -1158,11 +1241,22 @@ function rotate(x,y,r,scale)
 	return p
 end
 
+function draw_shape_dot(arr,x,y,c,angle)
+	local p1
+	for i=1,#arr,2 do
+		if arr[i]=="x" then
+			p1={x="x",y="x"}
+		else
+			p1=rotate(arr[i],arr[i+1],angle,scale)
+			pset(p1.x+x,p1.y+y,c)
+		end
+	end
+end
+
 function draw_shape(arr,x,y,c,angle,with_wave,draw_ratio,scale)
 	local p1=rotate(arr[1],arr[2],angle,scale)
 	local i2=#arr-1
 	if draw_ratio then
-		-- i2=3+flr(#arr-3)*clamp(draw_ratio,0,1)
 		if(draw_ratio<=0) return nil
 		draw_ratio=clamp(draw_ratio,0,1)
 		local lines=#arr/2-1
@@ -1198,7 +1292,7 @@ function draw_shape(arr,x,y,c,angle,with_wave,draw_ratio,scale)
 		end
 	end
 	if draw_ratio<1 and p1.x!="x" then
-		circfill(p1.x+x,p1.y+y,1,cc)
+		circfill(p1.x+x,p1.y+y,1,c)
 	end
 	-- if(dev) circ(x,y,2,14) -- pivot center circle
 end
@@ -1302,18 +1396,28 @@ function shake_diff()
 	return stage.__on_shake and (rnd(12)-6)*shake_t/100 or 0 -- +-6 -> 0
 end
 
-function print_score(x,y,scale,max_len)
-	local t0,t1="",get_score_str()
+function print_score(x,y,scale,max_len,draw_ratio)
+	local t1=get_score_str()
 	local len=max_len or #t1
+	for i=1,len-#t1 do t1="_"..t1 end
+
+	if draw_ratio then
+		draw_ratio=clamp(draw_ratio,0,1)
+		len=flr(#t1*draw_ratio)
+		t1=sub(t1,1,len)
+	end
+	
 	local s=scale or 1
 	local nw,gap=6*s,3*s
 	local lx=x-(len*(nw+gap)-gap)/2
-	for i=1,len-#t1 do t1="_"..t1 end
 
 	-- 전투기가 점수 밑에 들어가면 망점 처리
 	-- if not _ship.is_killed and _ship.y<20 and _ship.x<sw/2+50 and _ship.x>sw/2-50 then
 	-- 	for i=0,7 do poke(0x5500+i,i%2==0 and 85 or 170) end -- fill pattern
 	-- end
+
+	
+
 	for i=1,#t1 do
 		local n=sub(t1,i,i)
 		local x2=lx+(i-1)*(nw+gap)+shake_diff()
@@ -1322,6 +1426,7 @@ function print_score(x,y,scale,max_len)
 	end
 	-- fillp()
 end
+
 function get_score_str()
 	-- 소숫점 덧셈 버그 때문에 정수 2개 사용(0.1+0.1=0.199같은 버그)
 	local t=""
@@ -1371,9 +1476,11 @@ end
 cc=11 -- default color
 gg_reset=function()
 	gg={
-		key_wait=20,
+		key_wait=180,
 		is_title=true,
 		title_timer=0,
+		title_selected_menu=1,
+		game_mode=1,
 		is_gameover=false,
 		gameover_timer=0,
 		score1=0,
@@ -1386,12 +1493,13 @@ gg_reset=function()
 	}
 	if dev then
 		gg.score1=0
-		gg.score2=90
+		gg.score2=0
 		gg.ufo_born=5
 		gg.spd_multiplier=5
 		gg.ships=0
 		-- gg.is_title=false
 		-- gg.is_gameover=true
+		-- gg.key_wait=240
 	end
 end
 gg_reset()
@@ -1530,14 +1638,14 @@ end
 -- <CLEAR>
 -- 자잘한 글자들에도 파괴 연출
 -- UI 다듬기(스코어는 유효 숫자만, 실드를 글자+밑줄로 표기)
-
--- <TODO>
 -- 게임 모드 추가
 -- 시작할 때 HUD 등장 연출?
--- 배경 별 색상 2종류로 테스트
--- 로고, 게임오버 글자 더 크게
--- 보너스 알림 잘못 나오는 경우 제거
--- 보호막 리필 중에 X키 누르면 피즐 이펙트
+-- 보호막 리필 중에 X키 누르면 피즐 이펙트 or 비행기 주변에 점멸 효과
+-- 미완성 모드 안내 모달창 + 등장퇴장 연출
+
+-- <TODO>
+-- 초소형 UFO 등 여러 타입 추가
+-- UFO RUSH 모드 만들기
 
 -- <Ref.>
 -- https://youtu.be/i-Gs01omJyI

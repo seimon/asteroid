@@ -1,5 +1,5 @@
 dev=false
-ver="0.85" -- 2023/01/15
+ver="0.86" -- 2023/01/17
 sw,sh=480,270
 log_txt={}
 
@@ -274,8 +274,6 @@ function str_to_arr(str,scale,pivot)
 		for i=1,#arr,2 do
 			if arr[i]!="x" then
 				-- split() 버그 때문에 인자에 +0 해줌
-				-- x1,x2=min(x1+1,arr[i]+1)-1,max(x2+1,arr[i]+1)-1
-				-- y1,y2=min(y1+1,arr[i+1]+1)-1,max(y2+1,arr[i+1]+1)-1
 				x1,x2=min(x1+0,arr[i]+0),max(x2+0,arr[i]+0)
 				y1,y2=min(y1+0,arr[i+1]+0),max(y2+0,arr[i+1]+0)
 			end
@@ -294,27 +292,32 @@ function str_to_arr(str,scale,pivot)
 
 	return arr
 end
-s_ufo=str_to_arr("-1,-3,1,-3,2,-1,5,1,2,3,-2,3,-5,1,-2,-1,-1,-3,x,x,-2,-1,2,-1,x,x,-5,1,5,1",2)
+s_ufo_str="-1,-3,1,-3,2,-1,5,1,2,3,-2,3,-5,1,-2,-1,-1,-3,x,x,-2,-1,2,-1,x,x,-5,1,5,1"
+s_ufo=str_to_arr(s_ufo_str,2)
 s_ship2=str_to_arr("0,-4,4,4,0,2,-4,4,0,-4") -- remain ships
 s_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
 s_thrust=str_to_arr("-1,-2,-10,0,-1,2")
 s_shield=str_to_arr("0,-3,-2,-2,-3,0,-2,2,0,3,2,2,3,0,2,-2,0,-3",3)
-s_ast10=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",3)
-s_ast11=str_to_arr("0,-4,-4,-2,-3,0,-3,3,0,4,1,2,3,2,4,-2,0,-4",3)
-s_ast20=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.8)
-s_ast21=str_to_arr("0,-4,-2,-2,-4,-2,-3,1,-3,3,1,4,2,1,4,-1,0,-4",1.9)
-s_ast30=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",1)
-s_ast31=str_to_arr("-4,0,-2,-4,2,-4,4,-2,4,2,0,4,-4,0",0.95)
+
+s_ast1={} s_ast2={} s_ast3={}
+s_ast1[1]=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0",3)
+s_ast1[2]=str_to_arr("0,-4,-4,-2,-3,0,-3,3,0,4,1,2,3,2,4,-2,0,-4",3)
+s_ast1[3]=str_to_arr("3,0,2,1,2,2,0,3,-2,2,-3,0,-2.5,-2,0,-3,2,-2,3,0",4)
+s_ast1[4]=str_to_arr("3,0,1,3,-2,2,-2,1,-3,0,-1.5,-3,0,-3,2,-2,2,-1,3,0",4)
+s_ast2[1]=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.8)
+s_ast2[2]=str_to_arr("0,-4,-2,-2,-4,-2,-3,1,-3,3,1,4,2,1,4,-1,0,-4",1.9)
+s_ast3[1]=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",1)
+s_ast3[2]=str_to_arr("-4,0,-2,-4,2,-4,4,-2,4,2,0,4,-4,0",0.95)
+s_ast3[3]=str_to_arr("0,-4,-4,1,-2,4,4,1,0,-4",1)
+s_ast3[4]=str_to_arr("0,-4,-2,-3,-3,3,1,4,4,-2,0,-4",1)
+
 s_title_str="0,6,0,2,2,0,4,2,4,6,x,x,0,4,4,4,x,x,9,0,5,0,5,3,9,3,9,6,5,6,x,x,10,0,14,0,x,x,12,0,12,6" -- AST
--- s_title_str="2,0,5,6,2,4,-1,6,2,0,x,x,9,0,5,0,5,3,9,3,9,6,5,6,x,x,10,0,14,0,x,x,12,0,12,6" -- AST(A=Starship)
 s_title_str..=",x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3,x,x,20,6,20,0,24,0,24,3,20,3,x,x,21,3,24,6" -- ER
 s_title_str..=",x,x,25,0,29,0,29,6,25,6,25,0,x,x,30,0,34,0,x,x,32,0,32,6,x,x,30,6,34,6" -- OI
 s_title_str..=",x,x,35,0,37,0,39,2,39,4,37,6,35,6,35,0,x,x,44,0,40,0,40,3,44,3,44,6,40,6" -- DS
 s_title=str_to_arr(s_title_str,4.5,{x=0.5,y=0.5})
 s_demake=str_to_arr("0,0,2,0,4,2,4,4,2,6,0,6,0,0,x,x,9,0,5,0,5,6,9,6,x,x,5,3,8,3,x,x,10,6,10,0,12,2,14,0,14,6,x,x,15,6,15,2,17,0,19,2,19,6,x,x,15,4,19,4,x,x,20,0,20,6,x,x,24,0,20,3,24,6,x,x,29,0,25,0,25,6,29,6,x,x,25,3,28,3",4.5,{x=0.5,y=0.5})
 s_2023=str_to_arr("0,0,4,0,4,3,0,3,0,6,4,6,x,x,5,0,9,0,9,6,5,6,5,0,x,x,10,0,14,0,14,3,10,3,10,6,14,6,x,x,15,0,19,0,19,6,15,6,x,x,15,3,19,3",4.5,{x=0.5,y=0.5})
--- s_game=str_to_arr("4,0,1,0,0,2,0,6,4,6,4,3,2,3,x,x,4,6,7,0,10,6,10,0,13,6,16,0,16,6,x,x,5,4,9,4,x,x,21,0,17,0,17,6,21,6,x,x,17,3,20,3",4)
--- s_over=str_to_arr("4,0,4,4,3,6,0,6,0,2,1,0,4,0,x,x,5,0,8,6,11,0,x,x,16,0,12,0,12,6,16,6,x,x,12,3,15,3,x,x,17,6,17,0,21,0,21,3,18,3,21,6",4)
 s_game=str_to_arr("4,0,0,0,0,6,4,6,4,4,2,4,x,x,5,6,5,2,7,0,9,2,9,6,x,x,5,4,9,4,x,x,10,6,10,0,12,2,14,0,14,6,x,x,19,0,15,0,15,6,19,6,x,x,15,3,18,3",4)
 s_over=str_to_arr("0,0,4,0,4,6,0,6,0,0,x,x,5,0,7,6,9,0,x,x,14,0,10,0,10,6,14,6,x,x,10,3,13,3,x,x,15,6,15,0,19,0,19,3,15,3,x,x,16,3,19,6",4)
 s_box=str_to_arr("0,-1,2,-1,2,1,0,1,0,-1",5)
@@ -338,12 +341,21 @@ s_num["7"]=str_to_arr("0,0,2,0,2,4",3)
 s_num["8"]=str_to_arr("0,0,2,0,2,4,0,4,0,0,x,x,0,2,2,2",3)
 s_num["9"]=str_to_arr("2,2,0,2,0,0,2,0,2,4,0,4",3)
 s_text_break=str_to_arr("0,0,4,4,8,0,12,4,16,0,20,4,24,0,28,4,32,0,36,4",2) -- /\/\/\ shape
+
 s_cat_str="1,-2.5,2,-4,3,-2,4,-1,4,2,2,4,-2,4,-4,2,-4,-1,-3,-2,-2,-4,-1,-2.5,1,-2.5"
 s_cat_str..=",x,x,-3,-0.5,-0.5,-0.5,-0.5,0.5,-1.75,1,-3,0.5,-3,-0.5,x,x,-1.75,-0.5,-1.75,0.5" -- eye l
 s_cat_str..=",x,x,0.5,-0.5,3,-0.5,3,0.5,1.75,1,0.5,0.5,0.5,-0.5,x,x,1.75,-0.5,1.75,0.5" -- eye r
 s_cat_str..=",x,x,-2,2,-1.5,2.5,-1,2.5,0,2,1,2.5,1.5,2.5,2,2,x,x,0,2,0,1.5" -- mouth
 s_cat_str..=",x,x,2.5,1.5,5,1.5,x,x,2.5,2.5,5,3,x,x,-2.5,1.5,-5,1.5,x,x,-2.5,2.5,-5,3"
-s_cat=str_to_arr(s_cat_str)
+s_lunarlander_str="-1,3,-3,1,-3,-1,-1,-3,1,-3,3,-1,3,1,1,3,-1,3"
+s_lunarlander_str..=",x,x,-1,-3,-1,4,-2,6,2,6,1,4,1,-3"
+s_lunarlander_str..=",x,x,-5,7,-4,7,-2,3,2,3,4,7,5,7"
+s_lunarlander_str..=",x,x,-3,-1,3,-1,x,x,-3,1,3,1,x,x,-1,4,1,4"
+s_debris={}
+s_debris[1]=str_to_arr(s_lunarlander_str,4,{x=0.5,y=0.5})
+s_debris[2]=str_to_arr(s_ufo_str,4)
+s_debris[3]=str_to_arr(s_cat_str,5)
+
 
 
 
@@ -368,6 +380,18 @@ function space:init()
 		}
 	end
 	for i=1,140 do add(self.stars,make_star(i,200,1)) end
+
+	-- 배경에 항상 떠다니는 쓰레기 추가
+	add(self.particles,
+		{
+			type="debris",
+			x=sw+50,
+			y=50+rnd(sh-100),
+			r=0,
+			sr=0.001,
+			id=2,
+			age=0
+		})
 
 	self:show(true)
 	self:on("update",self.on_update)
@@ -398,7 +422,18 @@ function space:_draw()
 			v.sy*=0.93
 			if(v.age>20) del(self.particles,v)
 
-	elseif v.type=="bullet" or v.type=="bullet_ufo" then
+		elseif v.type=="debris" then
+			draw_shape(s_debris[v.id],v.x,v.y,cc-7,v.r)
+			v.x-=1
+			-- v.r+=0.001
+			v.r+=v.sr
+			if v.x<-100 then -- 계속 모양 바꿔서 다시 날아옴
+				v.x=sw+100 v.y=50+rnd(sh-100)
+				v.id=value_loop(v.id+1,1,#s_debris)
+				v.sr=0.0005+rnd()*0.001
+			end
+
+		elseif v.type=="bullet" or v.type=="bullet_ufo" then
 			v.x+=v.sx
 			v.y+=v.sy
 			coord_loop(v)
@@ -948,8 +983,9 @@ function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(uf
 			sx,sy=get_base_spd()
 		end
 		sr=(0.5+rnd(1))*(rndi(2)-0.5)*0.01
-		sp=(size==1) and s_ast10 or (size==2) and s_ast20 or s_ast30
-		if(#self.list%2<1) sp=(size==1) and s_ast11 or (size==2) and s_ast21 or s_ast31
+		-- sp=(size==1) and s_ast10 or (size==2) and s_ast20 or s_ast30
+		-- if(#self.list%2<1) sp=(size==1) and s_ast11 or (size==2) and s_ast21 or s_ast31
+		sp=(size==1) and s_ast1[1+rndi(#s_ast1)] or (size==2) and s_ast2[1+rndi(#s_ast2)] or s_ast3[1+rndi(#s_ast3)]
 	end
 	local e={
 		is_yeanling=yeanling,
@@ -972,7 +1008,8 @@ end
 
 function enemies:kill_all()
 	for e in all(self.list) do
-		add_break_eff(e.x,e.y,s_ast20,3,60,true)
+		-- add_break_eff(e.x,e.y,s_ast2[1],3,60,true)
+		add_break_eff(e.x,e.y,e.shape,3,60,true)
 	end
 	-- sfx(3,3)
 	self.list={}
@@ -983,7 +1020,8 @@ function enemies:kill_center(r)
 	for e in all(self.list) do
 		if abs(cx-e.x)<=r and abs(cy-e.y)<=r and get_dist(cx,cy,e.x,e.y)<=r then
 			del(self.list,e)
-			add_break_eff(e.x,e.y,s_ast20)
+			-- add_break_eff(e.x,e.y,s_ast2[1])
+			add_break_eff(e.x,e.y,e.shape)
 			-- sfx(3,3)
 		end
 	end
@@ -1019,8 +1057,9 @@ function title:_draw()
 		draw_shape(s_title,x+dx1,y+dy1,cc,0,false,dr,{x=s,y=s})
 		draw_shape(s_demake,x-50+dx2,y+36+dy2,cc,0,false,dr-0.4,{x=s,y=s})
 		draw_shape(s_2023,x+76+dx3,y+36+dy3,cc,0,false,dr-0.8,{x=s,y=s})
-		draw_shape(s_cat,sw-50+dx3,sh-18+dy3,cc,0,false,dr-1,{x=9,y=7})
-
+		-- draw_shape(s_cat,sw-50+dx3,sh-18+dy3,cc,0,false,dr-1,{x=9,y=7}) -- 고양이
+		-- draw_shape(s_lunarlander,sw-60+dx3,sh-60+dy3,cc,0,false,dr-1,{x=2,y=2}) -- 달착륙선
+		
 		local dy4=sin(t()%5/5)*7
 		local dy5=sin((t()-0.3)%5/5)*7
 		local dy6=sin((t()-0.6)%5/5)*7
@@ -1582,7 +1621,7 @@ function _draw()
 		local w=_ship.shield_timer/_ship.shield_timer_max*74
 		if(not _ship.shield_enable and f%30<15) t="" w=0
 		print79(t,sw-4,hud_top,cc,1) -- shield text
-		if w>1 then line(sw-5-w,hud_top+10,sw-5,hud_top+10,cc) end -- shield line
+		-- if w>1 then line(sw-5-w,hud_top+10,sw-5,hud_top+10,cc) end -- shield line
 
 		--[[ -- shield icon
 		if _ship.shield_enable then draw_shape(s_shield_o,sw-10,3,cc)
@@ -1636,11 +1675,12 @@ end
 
 
 -- <CLEAR>
--- 자잘한 글자들에도 파괴 연출
+-- 타이틀, 게임오버 화면 연출 다듬기(둥실둥실, 등장 연출)
+-- 타이틀, 게임오버 화면에서 자잘한 글자들에도 파괴 연출
+-- draw_shape()의 draw_ratio를 더 정밀하게 처리
 -- UI 다듬기(스코어는 유효 숫자만, 실드를 글자+밑줄로 표기)
 -- 게임 모드 추가
--- 시작할 때 HUD 등장 연출?
--- 보호막 리필 중에 X키 누르면 피즐 이펙트 or 비행기 주변에 점멸 효과
+-- 보호막 리필 중 전투기 주변 점멸 효과
 -- 미완성 모드 안내 모달창 + 등장퇴장 연출
 
 -- <TODO>

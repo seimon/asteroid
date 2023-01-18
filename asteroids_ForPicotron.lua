@@ -1,6 +1,7 @@
 dev=false
-ver="0.86" -- 2023/01/17
+ver="0.87" -- 2023/01/18
 sw,sh=480,270
+cx,cy=sw/2,sh/2
 log_txt={}
 
 -- <Asteroids Font(7x9, 5x7 Pixel)> --------------------
@@ -304,8 +305,10 @@ s_ast1[1]=str_to_arr("4,0,2,-1,2,-3,-1,-4,-2,-2,-4,0,-2,1,-3,2,-2,4,0,3,2,4,4,0"
 s_ast1[2]=str_to_arr("0,-4,-4,-2,-3,0,-3,3,0,4,1,2,3,2,4,-2,0,-4",3)
 s_ast1[3]=str_to_arr("3,0,2,1,2,2,0,3,-2,2,-3,0,-2.5,-2,0,-3,2,-2,3,0",4)
 s_ast1[4]=str_to_arr("3,0,1,3,-2,2,-2,1,-3,0,-1.5,-3,0,-3,2,-2,2,-1,3,0",4)
-s_ast2[1]=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.8)
-s_ast2[2]=str_to_arr("0,-4,-2,-2,-4,-2,-3,1,-3,3,1,4,2,1,4,-1,0,-4",1.9)
+s_ast2[1]=str_to_arr("3,-3,4,0,3,3,0,3,-2,4,-3,3,-3,1,-4,-2,-1,-4,1,-3,3,-3",1.9)
+s_ast2[2]=str_to_arr("2,-4,3,-1,4.5,1,2,2,1,4,-1,2.5,-4,2,-3,0,-3,-3,0,-3,2,-4",1.9)
+s_ast2[3]=str_to_arr("4,0,2,4,0,3,-2,4,-4,2,-4,-2,-2,-4,0,-2,3,-3,4,0",1.8)
+s_ast2[4]=str_to_arr("0,-4,-2,-2,-4,-2,-3,1,-3,3,1,4,2,1,4,-1,0,-4",1.9)
 s_ast3[1]=str_to_arr("4,2,2,4,-4,0,-2,-4,3,-3,4,2",1)
 s_ast3[2]=str_to_arr("-4,0,-2,-4,2,-4,4,-2,4,2,0,4,-4,0",0.95)
 s_ast3[3]=str_to_arr("0,-4,-4,1,-2,4,4,1,0,-4",1)
@@ -342,11 +345,17 @@ s_num["8"]=str_to_arr("0,0,2,0,2,4,0,4,0,0,x,x,0,2,2,2",3)
 s_num["9"]=str_to_arr("2,2,0,2,0,0,2,0,2,4,0,4",3)
 s_text_break=str_to_arr("0,0,4,4,8,0,12,4,16,0,20,4,24,0,28,4,32,0,36,4",2) -- /\/\/\ shape
 
-s_cat_str="1,-2.5,2,-4,3,-2,4,-1,4,2,2,4,-2,4,-4,2,-4,-1,-3,-2,-2,-4,-1,-2.5,1,-2.5"
-s_cat_str..=",x,x,-3,-0.5,-0.5,-0.5,-0.5,0.5,-1.75,1,-3,0.5,-3,-0.5,x,x,-1.75,-0.5,-1.75,0.5" -- eye l
-s_cat_str..=",x,x,0.5,-0.5,3,-0.5,3,0.5,1.75,1,0.5,0.5,0.5,-0.5,x,x,1.75,-0.5,1.75,0.5" -- eye r
-s_cat_str..=",x,x,-2,2,-1.5,2.5,-1,2.5,0,2,1,2.5,1.5,2.5,2,2,x,x,0,2,0,1.5" -- mouth
-s_cat_str..=",x,x,2.5,1.5,5,1.5,x,x,2.5,2.5,5,3,x,x,-2.5,1.5,-5,1.5,x,x,-2.5,2.5,-5,3"
+-- s_cat_str="1,-2.5,2,-4,3,-2,4,-1,4,2,2,4,-2,4,-4,2,-4,-1,-3,-2,-2,-4,-1,-2.5,1,-2.5"
+-- s_cat_str..=",x,x,-3,-0.5,-0.5,-0.5,-0.5,0.5,-1.75,1,-3,0.5,-3,-0.5,x,x,-1.75,-0.5,-1.75,0.5" -- eye l
+-- s_cat_str..=",x,x,0.5,-0.5,3,-0.5,3,0.5,1.75,1,0.5,0.5,0.5,-0.5,x,x,1.75,-0.5,1.75,0.5" -- eye r
+-- s_cat_str..=",x,x,-2,2,-1.5,2.5,-1,2.5,0,2,1,2.5,1.5,2.5,2,2,x,x,0,2,0,1.5" -- mouth
+-- s_cat_str..=",x,x,2.5,1.5,5,1.5,x,x,2.5,2.5,5,3,x,x,-2.5,1.5,-5,1.5,x,x,-2.5,2.5,-5,3"
+s_cat_str="4,-3,6,-7,10,-2.5,12,-1,13,3,12,8,5,11,-5,11,-12,8,-13,3,-12,-1,-10,-2.5,-6,-7,-4,-3,4,-3"
+s_cat_str..=",x,x,3,0,10.5,0,10,2,6.5,3.5,4,2.5,3,0,x,x,6,0,6,2.5" -- eye l
+s_cat_str..=",x,x,-3,0,-4,2.5,-6.5,3.5,-10,2,-10.5,0,-3,0,x,x,-6,0,-6,2.5" -- eye r
+s_cat_str..=",x,x,-4,5,-4.5,6,-4,7.5,-2,8.5,-0.5,7.5,0,6,0.5,7.5,2,8.5,4,7.5,4.5,6,4,5" -- mouth
+s_cat_str..=",x,x,10.5,3.5,16,3.5,x,x,10.5,5.5,15,8.5"
+s_cat_str..=",x,x,-10.5,3.5,-16,3.5,x,x,-10.5,5.5,-15,8.5"
 s_lunarlander_str="-1,3,-3,1,-3,-1,-1,-3,1,-3,3,-1,3,1,1,3,-1,3"
 s_lunarlander_str..=",x,x,-1,-3,-1,4,-2,6,2,6,1,4,1,-3"
 s_lunarlander_str..=",x,x,-5,7,-4,7,-2,3,2,3,4,7,5,7"
@@ -381,17 +390,17 @@ function space:init()
 	end
 	for i=1,140 do add(self.stars,make_star(i,200,1)) end
 
-	-- 배경에 항상 떠다니는 쓰레기 추가
-	add(self.particles,
-		{
-			type="debris",
-			x=sw+50,
-			y=50+rnd(sh-100),
-			r=0,
-			sr=0.001,
-			id=2,
-			age=0
-		})
+	-- 배경에 항상 떠다니는 쓰레기 추가...를 했다가 신경쓰여서 제거함
+	-- add(self.particles,
+	-- 	{
+	-- 		type="debris",
+	-- 		x=sw+50,y=40+rnd(sh-80),
+	-- 		r=0,
+	-- 		sy=0.1,
+	-- 		sr=0.001,
+	-- 		id=2,
+	-- 		age=0
+	-- 	})
 
 	self:show(true)
 	self:on("update",self.on_update)
@@ -406,10 +415,15 @@ function space:_draw()
 		local y=v.y+self.spd_y*v.spd
 		v.x=x>sw+1 and x-sw-1 or x<-2 and x+sw+1 or x
 		v.y=y>sh+1 and y-sh-1 or y<-2 and y+sh+1 or y
-		-- if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.003 and 27 or v.c)
-		-- else pset(v.x,v.y,rnd()<0.003 and 27 or v.c) end
-		if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.002 and cc-3 or v.c)
-		else pset(v.x,v.y,rnd()<0.002 and cc-3 or v.c) end
+		-- if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.002 and cc-3 or v.c)
+		-- else pset(v.x,v.y,rnd()<0.002 and cc-3 or v.c) end
+		if rnd()<0.001 then
+			line(v.x-4,v.y,v.x+4,v.y,cc-7)
+			line(v.x,v.y-4,v.x,v.y+4,cc-7)
+			circ(v.x,v.y,1,cc-6)
+			pset(v.x,v.y,cc-4)
+		elseif v.size>1.9 then circfill(v.x,v.y,1,v.c)
+		else pset(v.x,v.y,v.c) end
 	end
 
 	-- particles
@@ -423,13 +437,16 @@ function space:_draw()
 			if(v.age>20) del(self.particles,v)
 
 		elseif v.type=="debris" then
-			draw_shape(s_debris[v.id],v.x,v.y,cc-7,v.r)
-			v.x-=1
-			-- v.r+=0.001
+			-- draw_shape(s_debris[v.id],v.x,v.y,cc-7,v.r)
+			draw_shape(s_ast1[v.id],v.x,v.y,cc-7,v.r)
+			v.x-=0.6*gg.spd_multiplier
+			v.y+=v.sy
 			v.r+=v.sr
-			if v.x<-100 then -- 계속 모양 바꿔서 다시 날아옴
-				v.x=sw+100 v.y=50+rnd(sh-100)
-				v.id=value_loop(v.id+1,1,#s_debris)
+			if v.x<-100 or v.y<-50 or v.y>sh+50 then -- 화면 밖으로 나가면 계속 모양 바꿔서 다시 날아옴
+				v.x=sw+100 v.y=40+rnd(sh-80)
+				v.sy=rnd(0.2)-0.1
+				-- v.id=value_loop(v.id+1,1,#s_debris)
+				v.id=value_loop(v.id+1,1,#s_ast1)
 				v.sr=0.0005+rnd()*0.001
 			end
 
@@ -507,7 +524,7 @@ function space:_draw()
 
 		elseif v.type=="line" then
 			line(v.x+v.x1,v.y+v.y1,v.x+v.x2,v.y+v.y2,cc)
-			local p1,p2=rotate(v.x1,v.y1,v.r),rotate(v.x2,v.y2,v.r)
+			local p1,p2=rotate(v.x1,v.y1,v.r,{x=0.99,y=0.98}),rotate(v.x2,v.y2,v.r,{x=0.98,y=0.99})
 			v.x+=v.sx
 			v.y+=v.sy
 			v.x1=p1.x
@@ -1016,7 +1033,7 @@ function enemies:kill_all()
 end
 
 function enemies:kill_center(r)
-	local cx,cy=sw/2,sh/2
+	-- local cx,cy=sw/2,sh/2
 	for e in all(self.list) do
 		if abs(cx-e.x)<=r and abs(cy-e.y)<=r and get_dist(cx,cy,e.x,e.y)<=r then
 			del(self.list,e)
@@ -1057,7 +1074,7 @@ function title:_draw()
 		draw_shape(s_title,x+dx1,y+dy1,cc,0,false,dr,{x=s,y=s})
 		draw_shape(s_demake,x-50+dx2,y+36+dy2,cc,0,false,dr-0.4,{x=s,y=s})
 		draw_shape(s_2023,x+76+dx3,y+36+dy3,cc,0,false,dr-0.8,{x=s,y=s})
-		-- draw_shape(s_cat,sw-50+dx3,sh-18+dy3,cc,0,false,dr-1,{x=9,y=7}) -- 고양이
+		-- draw_shape(s_debris[3],sw-90+dx3,sh-60+dy3,cc,0.01,false,dr-1,{x=1,y=1}) -- 고양이
 		-- draw_shape(s_lunarlander,sw-60+dx3,sh-60+dy3,cc,0,false,dr-1,{x=2,y=2}) -- 달착륙선
 		
 		local dy4=sin(t()%5/5)*7
@@ -1068,29 +1085,36 @@ function title:_draw()
 		local dx6=sin(t()%4/4)*7
 		
 		menu_str={}
-		for i=1,3 do
+		for i=1,#self.menu_str do
 			local t1,t2="",""
 			if i==gg.title_selected_menu then
 				t1,t2="> "," <"
 				if(t()%0.3<0.15) t1,t2="- "," -"
 			end
 			menu_str[i]=t1..self.menu_str[i]..t2
-		end		
+		end
 		local dr=get_draw_ratio(gg.title_timer,-3,3,240) -- -3->3 / 240frames
 		print79(menu_str[1],sw/2+dx4,sh/2+30+dy4,cc,0.5,false,dr,gg.title_selected_menu==1)
-		print79(menu_str[2],sw/2+dx5,sh/2+50+dy5,cc,0.5,false,dr-1,gg.title_selected_menu==2)
-		print79(menu_str[3],sw/2+dx6,sh/2+70+dy6,cc,0.5,false,dr-2,gg.title_selected_menu==3 and self.modal_timer<=0)
+		print79(menu_str[2],sw/2+dx5,sh/2+50+dy5,cc,0.5,false,dr-0.7,gg.title_selected_menu==2)
+		print79(menu_str[3],sw/2+dx6,sh/2+70+dy6,cc,0.5,false,dr-1.4,gg.title_selected_menu==3 and self.modal_timer<=0)
 		
 		local dy7=sin((t())%5/5)*6
 		local dr=get_draw_ratio(gg.title_timer,-2,1,300) -- -2->1 / 300frames
+		-- print79("z:fire x:shield <>:rotate ^:thrust",sw/2-dx1,sh-26+dy7,cc,0.5,false,dr)
 		print79("(c)1979 atari inc. demaked by @mooon",sw/2-dx1,sh-16+dy7,cc,0.5,false,dr)
 		print79("version "..ver,sw-4,4,cc,1,false,dr)
 
+
+		-- draw modal window
 		if self.modal_timer>0 then
-			local cx,cy=sw/2+dy4,sh/2+dx4
-			local dr=1-get_draw_ratio(self.modal_timer-210,0,1,30)^4
-			rectfill(cx-115-dr*20,cy-15-dr*10,cx+115+dr*20,cy+15+dr*10,32)
-			draw_shape(s_box,cx-115-dr*20,cy,cc,0,false,1,{x=(230+dr*40)/10,y=3+dr*2})
+			local dr=1-get_draw_ratio(self.modal_timer-210,0,1,30)^4 -- 0->1
+			local cx,cy=cx+dy4,cy+dx4
+			local w,h=260+dr*20,40+dr*20
+			paltron(cc,32,cc-7)
+			paltron(cc-5,32,cc-7)
+			paltron(cc-7,32,cc-7)
+			rectfill(cx-w/2,cy-h/2,cx+w/2,cy+h/2,32)
+			draw_shape(s_box,cx-w/2,cy,cc,0,false,1,{x=w/10,y=h/10})
 			dr=get_draw_ratio(240-self.modal_timer,0,1,90)
 			print79("sorry, under develpment...",cx,cy-3,cc,0.5,false,dr)
 			if self.modal_timer==1 then
@@ -1107,22 +1131,21 @@ function title:_draw()
 			self.modal_timer-=1
 		elseif btn(2) then gg.title_selected_menu=value_loop(gg.title_selected_menu-1,1,3) gg.key_wait=10
 		elseif btn(3) then gg.title_selected_menu=value_loop(gg.title_selected_menu+1,1,3) gg.key_wait=10
-		-- elseif (btn(4) or btn(5)) and gg.title_timer>=240 and gg.title_selected_menu!=3 then
 		elseif (btn(4) or btn(5)) then
 			-- sfx(6,3)
 			if gg.title_selected_menu==3 then
 				self.modal_timer=240
 			else
-				add_break_eff(x,y,s_title,3.5,80,true)
-				add_break_eff(x-50,y+36,s_demake,3.5,80,true)
-				add_break_eff(x+76,y+36,s_2023,3.5,80,true)
-				add_break_eff(sw/2-30,sh/2+30,s_text_break,3.5,80,true)
-				add_break_eff(sw/2-30,sh/2+50,s_text_break,3.5,80,true)
-				add_break_eff(sw/2-30,sh/2+70,s_text_break,3.5,80,true)
-				add_break_eff(sw/2-128,sh-11,s_text_break,3.5,80,true)
-				add_break_eff(sw/2-64,sh-11,s_text_break,3.5,80,true)
-				add_break_eff(sw/2,sh-11,s_text_break,3.5,80,true)
-				add_break_eff(sw/2+64,sh-11,s_text_break,3.5,80,true)
+				add_break_eff(x,y,s_title,3.5,50,true)
+				add_break_eff(x-50,y+36,s_demake,3.5,50,true)
+				add_break_eff(x+76,y+36,s_2023,3.5,50,true)
+				add_break_eff(sw/2-30,sh/2+30,s_text_break,3,30,true)
+				add_break_eff(sw/2-30,sh/2+50,s_text_break,3,30,true)
+				add_break_eff(sw/2-30,sh/2+70,s_text_break,3,30,true)
+				add_break_eff(sw/2-128,sh-11,s_text_break,3,30,true)
+				add_break_eff(sw/2-64,sh-11,s_text_break,3,30,true)
+				add_break_eff(sw/2,sh-11,s_text_break,3,30,true)
+				add_break_eff(sw/2+64,sh-11,s_text_break,3,30,true)
 
 				gg.is_title=false
 				if gg.title_selected_menu==2 then
@@ -1159,7 +1182,6 @@ function title:_draw()
 		local dy3=sin(t()%4/4)*6
 		local dx3=sin((t()-0.6)%4/4)*6
 		dr=get_draw_ratio(gg.gameover_timer,-2,2,240) -- -1->1 / 240f
-		-- print79("your score",sw/2+dx3,y+50+dy3,cc,0.5,false,dr)
 		print79(self.menu_str[gg.title_selected_menu].." score",sw/2+dx3,y+50+dy3,cc,0.5,false,dr)
 		print_score(sw/2+dx2+dx3,y+64+dy3*1.3,1.6,8,dr)
 
@@ -1178,13 +1200,13 @@ function title:_draw()
 		elseif btn(4) or btn(5) then
 			-- sfx(3,3)
 			shake(30,0.3)
-			add_break_eff(sw/2-86,y,s_game,3,60,true)
-			add_break_eff(sw/2+8,y,s_over,3,60,true)
-			add_break_eff(sw/2-32,y+42,s_text_break,3.5,80,true)
-			add_break_eff(sw/2-32,y+56,s_text_break,3.5,80,true)
-			add_break_eff(sw/2-52,y+68,s_text_break,3.5,80,true)
-			add_break_eff(sw/2-84,sh/2+66,s_text_break,3.5,80,true)
-			add_break_eff(sw/2+10,sh/2+66,s_text_break,3.5,80,true)
+			add_break_eff(sw/2-86,y,s_game,3,50,true)
+			add_break_eff(sw/2+8,y,s_over,3,50,true)
+			add_break_eff(sw/2-32,y+42,s_text_break,3,30,true)
+			add_break_eff(sw/2-32,y+56,s_text_break,3,30,true)
+			add_break_eff(sw/2-52,y+68,s_text_break,3,30,true)
+			add_break_eff(sw/2-84,sh/2+66,s_text_break,3,30,true)
+			add_break_eff(sw/2+10,sh/2+66,s_text_break,3,30,true)
 
 			gg_reset()
 		end
@@ -1198,6 +1220,11 @@ end
 
 
 -- <etc. functions> ----------------------------------------
+
+-- c1을 c2가 덮으면 c3으로 바꿔준다
+function paltron(c1,c2,c3)
+	poke(0x8000+c1+(c2*64),c3)
+end
 
 -- v가 0->dur까지 증가하는동안 min->max로 증가하는 ratio를 반환
 function get_draw_ratio(v,min,max,dur)

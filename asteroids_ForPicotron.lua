@@ -1,5 +1,5 @@
 dev=false
-ver="0.87" -- 2023/01/18
+ver="0.87.2" -- 2023/01/29
 sw,sh=480,270
 cx,cy=sw/2,sh/2
 log_txt={}
@@ -89,11 +89,11 @@ function print79(t,x,y,c,align,big_size,draw_ratio,with_box)
 	
 	-- 글자 정렬
 	local align=align and align or 0 -- 정렬 0 왼쪽부터, 0.5 중앙, 1 오른쪽부터
-	local full_w=#t*w+(#t-1)*gap
+	local full_w=#t*w+(#t-1)*gap-1
 	if align==0.5 then x=x-full_w/2 elseif align==1 then x=x-full_w end
 
 	-- 테두리 박스
-	if(with_box and #t>0) draw_shape(s_box,x-6,y+3,cc,0,false,1,{x=(full_w+10)/10,y=1.6})
+	if(with_box and #t>0) draw_shape(s_box,x-5,y+3,cc,0,false,1,{x=(full_w+10)/10,y=1.6})
 
 	pal(7,c)
 	for i=1,#t do
@@ -384,11 +384,10 @@ function space:init()
 			y=rnd(sh),
 			spd=base_spd+i/max*base_spd,
 			size=1+rnd(1),
-			-- c=rnd()<0.2 and 26 or 23
 			c=rnd()<0.2 and cc-5 or cc-7
 		}
 	end
-	for i=1,140 do add(self.stars,make_star(i,200,1)) end
+	for i=1,140 do add(self.stars,make_star(i,100,1)) end
 
 	-- 배경에 항상 떠다니는 쓰레기 추가...를 했다가 신경쓰여서 제거함
 	-- add(self.particles,
@@ -417,7 +416,7 @@ function space:_draw()
 		v.y=y>sh+1 and y-sh-1 or y<-2 and y+sh+1 or y
 		-- if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.002 and cc-3 or v.c)
 		-- else pset(v.x,v.y,rnd()<0.002 and cc-3 or v.c) end
-		if rnd()<0.001 then
+		if rnd()<0.001 then -- twinkling +
 			line(v.x-4,v.y,v.x+4,v.y,cc-7)
 			line(v.x,v.y-4,v.x,v.y+4,cc-7)
 			circ(v.x,v.y,1,cc-6)
@@ -1084,6 +1083,7 @@ function title:_draw()
 		local dx5=sin(t()%5/5)*7
 		local dx6=sin(t()%4/4)*7
 		
+		-- draw menu
 		menu_str={}
 		for i=1,#self.menu_str do
 			local t1,t2="",""
@@ -1098,6 +1098,12 @@ function title:_draw()
 		print79(menu_str[2],sw/2+dx5,sh/2+50+dy5,cc,0.5,false,dr-0.7,gg.title_selected_menu==2)
 		print79(menu_str[3],sw/2+dx6,sh/2+70+dy6,cc,0.5,false,dr-1.4,gg.title_selected_menu==3 and self.modal_timer<=0)
 		
+		-- z/x key guide
+		do
+			
+		end
+
+		-- bottom text
 		local dy7=sin((t())%5/5)*6
 		local dr=get_draw_ratio(gg.title_timer,-2,1,300) -- -2->1 / 300frames
 		-- print79("z:fire x:shield <>:rotate ^:thrust",sw/2-dx1,sh-26+dy7,cc,0.5,false,dr)
@@ -1116,7 +1122,21 @@ function title:_draw()
 			rectfill(cx-w/2,cy-h/2,cx+w/2,cy+h/2,32)
 			draw_shape(s_box,cx-w/2,cy,cc,0,false,1,{x=w/10,y=h/10})
 			dr=get_draw_ratio(240-self.modal_timer,0,1,90)
-			print79("sorry, under develpment...",cx,cy-3,cc,0.5,false,dr)
+
+			if gg.title_selected_menu==4 then -- z/x key guide
+				local x,y=cx-74,cy-14
+				print79("z",x,y,cc,0,false,1,true)
+				print79("fire",x+16,y,cc)
+				print79("x",x,y+21,cc,0,false,1,true)
+				print79("shield",x+16,y+22,cc)
+				print79("^",x+89,y,cc,0,false,1,true)
+				print79("thrust",x+113,y,cc)
+				print79("<",x+80,y+22,cc,0,false,1,true)
+				print79(">",x+98,y+22,cc,0,false,1,true)
+				print79("rotate",x+113,y+22,cc)
+			elseif gg.title_selected_menu==3 then -- ufo rush mode
+				print79("sorry, under develpment...",cx,cy-3,cc,0.5,false,dr)
+			end
 			if self.modal_timer==1 then
 				add_break_eff(cx-54,cy,s_demake,3,30,true)
 				add_break_eff(cx+80,cy,s_2023,3,30,true)
@@ -1221,6 +1241,29 @@ end
 
 -- <etc. functions> ----------------------------------------
 
+function draw_cross_pattern()
+	local function draw_cross(x,y)
+		local w=10
+		if(f%4==0) line(x-w/2,y,x+w/2,y,cc)
+		if(f%4==2) line(x,y-w/2,x,y+w/2,cc)
+	end
+	for i=1,7 do
+		for j=1,4 do
+			draw_cross(((sw+50)/8)*i-25,((sh+50)/5)*j-25)
+		end
+	end
+end
+
+function draw_color_table()
+	local size=26
+	for i=0,31 do
+		local x=i%16*size
+		local y=i\16*size
+		rectfill(x,y,x+size,y+size,i)
+		print79(tostr(i),x+2,y+2,value_loop(i-10,0,31))
+	end
+end
+
 -- c1을 c2가 덮으면 c3으로 바꿔준다
 function paltron(c1,c2,c3)
 	poke(0x8000+c1+(c2*64),c3)
@@ -1279,8 +1322,9 @@ function score_up(size)
 
 end
 
-function value_loop(v,min,max) -- (4,1,3) -> 1 / (0,1,3) -> 3
-	return v<min and max or v>max and min or v
+function value_loop(v,min,max) -- (4,1,3) -> 1 / (0,1,3) -> 3 / (-2,0,8) -> 6
+	-- return v<min and max or v>max and min or v
+	return v<min and max-(min-v)+1 or v>max and min+(v-max)-1 or v
 end
 
 function angle_loop(v,min,max) -- (1.15,0,1) -> 0.15 / (0.4,0.5,2) -> 1.9
@@ -1585,11 +1629,12 @@ function _init()
 	stage:add_child(_enemies)
 	stage:add_child(_title)
 
-	-- set up display table
+	-- set up color table
 	for i0=0,9 do
 		local i=i0
 		-- poke4(0x5000+i0*4,(mid(0,i*10,255)<<8)+(mid(0,i*1,255)<<0)) -- 녹색 계열
-    poke4(0x5000+i0*4,(mid(0,i*7,255)<<16)+(mid(0,i*9,255)<<8)+(mid(0,i*9,255)<<0)) -- 흰색에 가깝게
+    -- poke4(0x5000+i0*4,(mid(0,i*7,255)<<16)+(mid(0,i*9,255)<<8)+(mid(0,i*9,255)<<0)) -- 흰색에 가깝게
+		poke4(0x5000+i0*4,(mid(0,i*8,255)<<16)+(mid(0,i*8,255)<<8)+(mid(0,i*9,255)<<0)) -- 흰색에 더 가깝게
   end
 	poke4(0x5000+9*4,0x688878)
 	poke4(0x5000+10*4,0x98d0c0)
@@ -1610,6 +1655,7 @@ end
 
 -- clsp={0x5f5f,0xafaf,0xf5f5,0xfafa} -- 2x2에 점 하나씩 스캔라인 순환
 clsp={0x7f7f,0xbfbf,0xdfdf,0xefef,0xf7f7,0xfbfb,0xfdfd,0xfefe} -- 4x2에 점 하나씩 스캔라인 순환
+clsp2={0xedb7,0x7edb,0xb7ed,0xdb7e}  -- 대각선 라인 오른쪽으로 순환
 cls1={11,10,9,8,7,6,5,4,3,2,1,0} -- 이전 프레임의 색상을 점점 어둡게(커스텀 팔레트)
 cls2={27,26,25,24,23,22,21,20,19,18,17,16}
 hud_top=4
@@ -1648,19 +1694,6 @@ function _draw()
 		local w=_ship.shield_timer/_ship.shield_timer_max*74
 		if(not _ship.shield_enable and f%30<15) t="" w=0
 		print79(t,sw-4,hud_top,cc,1) -- shield text
-		-- if w>1 then line(sw-5-w,hud_top+10,sw-5,hud_top+10,cc) end -- shield line
-
-		--[[ -- shield icon
-		if _ship.shield_enable then draw_shape(s_shield_o,sw-10,3,cc)
-		elseif f%30<15 then draw_shape(s_shield_x,sw-10,3,cc) end
-
-		-- shield line
-		local w=_ship.shield_timer/_ship.shield_timer_max*50
-		if w>1 then
-			if(not _ship.shield_enable and f%30<15) for i=0,7 do poke(0x5500+i,i%2==0 and 85 or 170) end
-			line(sw-14-w,6,sw-14,6,cc)
-			fillp()
-		end ]]
 	end
 
 	-- shake effect
@@ -1683,8 +1716,8 @@ function _draw()
 		print79("bullet:".._ship.bullet_remain,3,80,cc,0)
 	end
 
-	-- scanlines
-	-- for i=0,68 do poke(0x5400+i,0x11) end
+	-- draw_cross_pattern()
+	-- draw_color_table()
 
 	-- log
 	if dev and log_txt then

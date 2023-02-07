@@ -1,5 +1,5 @@
 dev=false
-ver="0.87.2" -- 2023/01/29
+ver="0.88" -- 2023/02/07
 sw,sh=480,270
 cx,cy=sw/2,sh/2
 log_txt={}
@@ -295,6 +295,7 @@ function str_to_arr(str,scale,pivot)
 end
 s_ufo_str="-1,-3,1,-3,2,-1,5,1,2,3,-2,3,-5,1,-2,-1,-1,-3,x,x,-2,-1,2,-1,x,x,-5,1,5,1"
 s_ufo=str_to_arr(s_ufo_str,2)
+s_ufo_mini=str_to_arr(s_ufo_str,1)
 s_ship2=str_to_arr("0,-4,4,4,0,2,-4,4,0,-4") -- remain ships
 s_ship=str_to_arr("4,0,-4,4,-2,0,-4,-4,4,0")
 s_thrust=str_to_arr("-1,-2,-10,0,-1,2")
@@ -414,8 +415,6 @@ function space:_draw()
 		local y=v.y+self.spd_y*v.spd
 		v.x=x>sw+1 and x-sw-1 or x<-2 and x+sw+1 or x
 		v.y=y>sh+1 and y-sh-1 or y<-2 and y+sh+1 or y
-		-- if v.size>1.9 then circfill(v.x,v.y,1,rnd()<0.002 and cc-3 or v.c)
-		-- else pset(v.x,v.y,rnd()<0.002 and cc-3 or v.c) end
 		if rnd()<0.001 then -- twinkling +
 			line(v.x-4,v.y,v.x+4,v.y,cc-7)
 			line(v.x,v.y-4,v.x,v.y+4,cc-7)
@@ -464,6 +463,7 @@ function space:_draw()
 			local killed={}
 			for e in all(_enemies.list) do
 				local dist=(e.size==4) and 8 or (e.size==1) and 11 or (e.size==2) and 8 or 5
+				if(e.size==4 and v.type=="bullet_ufo") dist=-1 -- ufo는 자기 총알에 맞지 않음
 				if abs(v.x-e.x)<=dist and abs(v.y-e.y)<=dist and get_dist(v.x,v.y,e.x,e.y)<=dist then
 					if(v.type=="bullet") score_up(e.size)
 					if(e.size<3) add(killed,{x=e.x,y=e.y,size=e.size})
@@ -888,29 +888,39 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 		if(e.size==4) c4+=1
 	end
 
-	-- 난이도 2만점마다 증가(큰 소행성이 리필되는 수 6~40)
-	local df=min(40,6+gg.score1\2000+gg.score2*5)
+	-- 난이도가 20000점마다 증가(큰 소행성이 리필되는 수 6~40)
+	-- local df=min(40,6+gg.score1\2000+gg.score2*5)
+
+	-- UFO가 나올 때마다 소행성이 많아짐(큰 소행성이 리필되는 수 증가 6~40)
+	-- UFO는 2만점마다 등장 / UFO RUSH 모드에서는 연속해서 등장
+	local df=min(40,6+gg.ufo_born)
+	
 	-- 카이퍼 벨트 모드라면 최소 수량을 더 늘린다
 	if(gg.title_selected_menu==2) df=40
+
+	-- UFO RUSH 모드라면 큰 소행성 리필 수량 고정
+	if(gg.title_selected_menu==3) df=4
 	
+	-- 큰 소행성 리필
 	if c1<df and #self.list<8+df then
 		local r=rnd()
 		local x=cos(r)*sw*0.7
 		local y=sin(r)*sh*0.7
 		local sx,sy=get_base_spd(atan2(-x,-y)) -- 화면 중앙을 향하는 속도
-		-- self:add(sw/2+x,sh/2+y,1,-x*0.001,-y*0.001,true)
 		self:add(sw/2+x,sh/2+y,1,sx,sy,true)
 	end
 
 	-- 20000점마다 UFO 출현 + 게임 속도 빨라짐
-	if c4<1 and gg.score1\2000+gg.score2*5>gg.ufo_born then 
+	-- if c4<1 and gg.score1\2000+gg.score2*5>gg.ufo_born then
+	-- 20000점마다 또는 UFO 출현 + 게임 속도 빨라짐
+	-- UFO RUSH 모드일 경우에는 끊임없이 UFO 출현
+	if c4<1 and (gg.score1\2000+gg.score2*5>gg.ufo_born or gg.title_selected_menu==3) then
 		local sx=min(1,0.4*gg.spd_multiplier)
 		self:add(-3,sh/2+rndi(100)-50,4,sx,0,true)
 		if(gg.ufo_born>20) self:add(sw+3,sh/2+rndi(100)-50,4,-sx,0,true) -- 후반에는 양쪽에서 동시 출현
 		gg.ufo_born+=1
 		gg.spd_multiplier+=0.1
 	end
-
 end
 
 function enemies:_draw()
@@ -941,13 +951,16 @@ function enemies:_draw()
 				line(e.x-5+d,e.y-1,e.x-7+d*1.4,e.y+1,cc)
 			end
 
-			if(e.type==1) e.spd_y=e.spd_x*sin(e.x%200/200) -- UFO 타입1은 지그재그 운행
+			if(e.type==2) e.spd_y=e.spd_x*sin(e.x%200/200) -- UFO 타입2는 사인파 운행
+			if(e.type==3) e.spd_y=e.spd_x*sin(f%200/200) e.x+=cos(f%200/200)*1.3 -- UFO 타입3은 뱅글뱅글 돌면서
+
 			e.count+=1
+
 			-- ufo가 새로 나올 때마다 총알 인터벌이 점점 짧아짐
 			if e.count>=max(30,100-gg.ufo_born*5) and not _ship.is_killed then
 				-- sfx(24,1)
-				e.count=0
 				-- sfx(23,-1)
+				e.count=0
 				local angle=atan2(_ship.x-e.x+rnd(10)-5,_ship.y-e.y+rnd(10)-5)
 				local sx=cos(angle+rnd()*0.04)
 				local sy=sin(angle+rnd()*0.04)
@@ -1016,8 +1029,8 @@ function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(uf
 		count=0,
 	}
 	if size==4 then
-		e.type=gg.ufo_born%3
-		if(e.type>0) e.spd_y=e.spd_x
+		e.type=gg.ufo_born%4
+		if(e.type==1) e.spd_y=e.spd_x -- UFO 타입1은 대각선 이동
 	end
 	add(self.list,e)
 end
@@ -1096,13 +1109,9 @@ function title:_draw()
 		local dr=get_draw_ratio(gg.title_timer,-3,3,240) -- -3->3 / 240frames
 		print79(menu_str[1],sw/2+dx4,sh/2+30+dy4,cc,0.5,false,dr,gg.title_selected_menu==1)
 		print79(menu_str[2],sw/2+dx5,sh/2+50+dy5,cc,0.5,false,dr-0.7,gg.title_selected_menu==2)
-		print79(menu_str[3],sw/2+dx6,sh/2+70+dy6,cc,0.5,false,dr-1.4,gg.title_selected_menu==3 and self.modal_timer<=0)
+		print79(menu_str[3],sw/2+dx6,sh/2+70+dy6,cc,0.5,false,dr-1.4,gg.title_selected_menu==3)
+		-- print79(menu_str[3],sw/2+dx6,sh/2+70+dy6,cc,0.5,false,dr-1.4,gg.title_selected_menu==3 and self.modal_timer<=0)
 		
-		-- z/x key guide
-		do
-			
-		end
-
 		-- bottom text
 		local dy7=sin((t())%5/5)*6
 		local dr=get_draw_ratio(gg.title_timer,-2,1,300) -- -2->1 / 300frames
@@ -1123,7 +1132,7 @@ function title:_draw()
 			draw_shape(s_box,cx-w/2,cy,cc,0,false,1,{x=w/10,y=h/10})
 			dr=get_draw_ratio(240-self.modal_timer,0,1,90)
 
-			if gg.title_selected_menu==4 then -- z/x key guide
+			if gg.title_selected_menu==4 then -- z/x key guide (TEST)
 				local x,y=cx-74,cy-14
 				print79("z",x,y,cc,0,false,1,true)
 				print79("fire",x+16,y,cc)
@@ -1134,7 +1143,7 @@ function title:_draw()
 				print79("<",x+80,y+22,cc,0,false,1,true)
 				print79(">",x+98,y+22,cc,0,false,1,true)
 				print79("rotate",x+113,y+22,cc)
-			elseif gg.title_selected_menu==3 then -- ufo rush mode
+			elseif gg.title_selected_menu==3 then -- ufo rush mode (덜 만들어서...)
 				print79("sorry, under develpment...",cx,cy-3,cc,0.5,false,dr)
 			end
 			if self.modal_timer==1 then
@@ -1153,9 +1162,9 @@ function title:_draw()
 		elseif btn(3) then gg.title_selected_menu=value_loop(gg.title_selected_menu+1,1,3) gg.key_wait=10
 		elseif (btn(4) or btn(5)) then
 			-- sfx(6,3)
-			if gg.title_selected_menu==3 then
-				self.modal_timer=240
-			else
+			-- if gg.title_selected_menu==3 then self.modal_timer=240 -- 3번 메뉴는 덜 만들어서...
+			-- else
+			do
 				add_break_eff(x,y,s_title,3.5,50,true)
 				add_break_eff(x-50,y+36,s_demake,3.5,50,true)
 				add_break_eff(x+76,y+36,s_2023,3.5,50,true)
@@ -1604,15 +1613,16 @@ gg_reset=function()
 	if dev then
 		gg.score1=0
 		gg.score2=0
-		gg.ufo_born=5
+		gg.ufo_born=22
 		gg.spd_multiplier=5
-		gg.ships=0
+		gg.ships=3
 		-- gg.is_title=false
 		-- gg.is_gameover=true
 		-- gg.key_wait=240
 	end
 end
 gg_reset()
+
 function _init()
 	f=0 -- every frame +1
 	-- srand(0) -- not work on Picotron
@@ -1629,11 +1639,9 @@ function _init()
 	stage:add_child(_enemies)
 	stage:add_child(_title)
 
-	-- set up color table
+	-- set color table
 	for i0=0,9 do
 		local i=i0
-		-- poke4(0x5000+i0*4,(mid(0,i*10,255)<<8)+(mid(0,i*1,255)<<0)) -- 녹색 계열
-    -- poke4(0x5000+i0*4,(mid(0,i*7,255)<<16)+(mid(0,i*9,255)<<8)+(mid(0,i*9,255)<<0)) -- 흰색에 가깝게
 		poke4(0x5000+i0*4,(mid(0,i*8,255)<<16)+(mid(0,i*8,255)<<8)+(mid(0,i*9,255)<<0)) -- 흰색에 더 가깝게
   end
 	poke4(0x5000+9*4,0x688878)

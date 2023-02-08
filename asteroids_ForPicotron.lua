@@ -1,5 +1,5 @@
-dev=false
-ver="0.88" -- 2023/02/07
+dev=true
+ver="0.881" -- 2023/02/08
 sw,sh=480,270
 cx,cy=sw/2,sh/2
 log_txt={}
@@ -451,12 +451,14 @@ function space:_draw()
 		elseif v.type=="bullet" or v.type=="bullet_ufo" then
 			v.x+=v.sx
 			v.y+=v.sy
-			coord_loop(v)
 			if v.type=="bullet_ufo" then
 				local len=4*(v.age_max-v.age)/v.age_max
 				line(v.x,v.y,v.x-v.sx*len,v.y-v.sy*len,cc)
 				circ(v.x,v.y,1,cc)
-			else pset(v.x,v.y,cc) end
+			else
+				coord_loop(v)
+				pset(v.x,v.y,cc)
+			end
 			if(v.age>v.age_max) del(self.particles,v)
 
 			-- 적과 충돌 처리
@@ -785,13 +787,17 @@ function ship:on_update()
 				shake(30,0.3)
 				-- 충돌 방향만 보고 서로 반대로 밀기
 				local d=atan2(e.x-x,e.y-y)
-				local sx,sy=cos(d)*0.35,sin(d)*0.35
-				e.spd_x=sx
-				e.spd_y=sy
+				-- local sx,sy=cos(d)*0.35,sin(d)*0.35
+				local sx,sy=cos(d)*0.5,sin(d)*0.5
+				if e.size==4 then
+					e.hit_spd_x=sx*4 e.hit_spd_y=sy*4
+				else 
+					e.spd_x=sx e.spd_y=sy
+				end
 				e.x+=sx*2
 				e.y+=sy*2
-				self.spd_x=-sx
-				self.spd_y=-sy
+				self.spd_x=-sx*2
+				self.spd_y=-sy*2
 				self.x-=sx*2
 				self.y-=sy*2
 				-- sfx(2,3)
@@ -899,7 +905,7 @@ function enemies:group_update() -- 소행성 수를 일정하게 맞춰준다
 	if(gg.title_selected_menu==2) df=40
 
 	-- UFO RUSH 모드라면 큰 소행성 리필 수량 고정
-	if(gg.title_selected_menu==3) df=4
+	if(gg.title_selected_menu==3) df=1
 	
 	-- 큰 소행성 리필
 	if c1<df and #self.list<8+df then
@@ -951,8 +957,14 @@ function enemies:_draw()
 				line(e.x-5+d,e.y-1,e.x-7+d*1.4,e.y+1,cc)
 			end
 
+			-- 충돌 후의 속도 더해주기(기본 동작을 유지하기 위해 충돌용 속도를 별도로 사용)
+			e.x+=e.hit_spd_x
+			e.y+=e.hit_spd_y
+			e.hit_spd_x*=0.97
+			e.hit_spd_y*=0.97
+
 			if(e.type==2) e.spd_y=e.spd_x*sin(e.x%200/200) -- UFO 타입2는 사인파 운행
-			if(e.type==3) e.spd_y=e.spd_x*sin(f%200/200) e.x+=cos(f%200/200)*1.3 -- UFO 타입3은 뱅글뱅글 돌면서
+			if(e.type==3) e.spd_y=e.spd_x*sin(f%200/200)*2 e.x+=cos(f%200/200)*0.6 -- UFO 타입3은 뱅글뱅글 돌면서
 
 			e.count+=1
 
@@ -1028,9 +1040,12 @@ function enemies:add(x,y,size,spd_x,spd_y,yeanling) -- size=1(big)~3(small),4(uf
 		shape=sp,
 		count=0,
 	}
+	-- UFO는 추가 값
 	if size==4 then
-		e.type=gg.ufo_born%4
+		e.type=gg.ufo_born%5
 		if(e.type==1) e.spd_y=e.spd_x -- UFO 타입1은 대각선 이동
+		if(e.type==4) e.spd_y=-e.spd_x -- UFO 타입4는 반대쪽 대각선
+		e.hit_spd_x,e.hit_spd_y=0,0 -- 충돌하면 사용할 일시적인 속도
 	end
 	add(self.list,e)
 end
@@ -1613,8 +1628,8 @@ gg_reset=function()
 	if dev then
 		gg.score1=0
 		gg.score2=0
-		gg.ufo_born=22
-		gg.spd_multiplier=5
+		gg.ufo_born=3
+		gg.spd_multiplier=1
 		gg.ships=3
 		-- gg.is_title=false
 		-- gg.is_gameover=true
